@@ -551,6 +551,63 @@ async function restoreV10SeedOnce() {
     throw e;
   }
 }
+
+async function restoreLegacyAccountsOnce() {
+  const raw = process.env.MMO_LEGACY_ACCOUNTS_IMPORT;
+  if (!IS_VERCEL || storage.kind !== 'upstash' || !raw) return { skipped: true };
+  const source = JSON.parse(raw);
+  if (!source || typeof source !== 'object' || Array.isArray(source)) throw new Error('Invalid legacy account file');
+  const imported = Object.entries(source);
+  for (const [key, a] of imported) {
+    if (!a || typeof a.username !== 'string' ||
+        !/^[A-Za-z0-9_-]{3,16}$/.test(a.username) ||
+        !/^[a-f0-9]{32}$/i.test(a.salt || '') ||
+        !/^[a-f0-9]{128}$/i.test(a.hash || '') ||
+        !/^[a-f0-9]{64}$/i.test(a.token || '')) throw new Error('Invalid account record: ' + key);
+  }
+  const accountKey = process.env.ACCOUNTS_KEY || 'city-mmo:accounts';
+  const markerKey = accountKey + ':legacy-account-import-complete';
+  if (await upstashCommand(['GET', markerKey])) return { alreadyRestored: true };
+  const lease = await acquireWorldLease();
+  let released = false;
+  try {
+    if (await upstashCommand(['GET', markerKey])) {
+      await releaseWorldLease(lease.token, null); released = true;
+      return { alreadyRestored: true };
+    }
+    const oldText = await upstashCommand(['GET', accountKey]);
+    const merged = normalizeAccounts(oldText ? JSON.parse(oldText) : {});
+    const backupKey = accountKey + ':backup-before-legacy-import-' + Date.now();
+    if (oldText) {
+      await upstashCommand(['SET', backupKey, oldText]);
+      if (await upstashCommand(['GET', backupKey]) !== oldText) throw new Error('Account backup verification failed');
+    }
+    let added = 0, replaced = 0;
+    for (const [, a] of imported) {
+      const key = a.username.trim().toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(merged, key)) replaced++; else added++;
+      merged[key] = { ...a, username: a.username.trim() };
+    }
+    await storage.saveAccounts(JSON.stringify(merged, null, 2));
+    const saved = normalizeAccounts((await storage.loadAccounts()) || {});
+    if (!imported.every(([, a]) => {
+      const actual = saved[a.username.trim().toLowerCase()];
+      return actual && actual.salt === a.salt && actual.hash === a.hash && actual.token === a.token;
+    })) throw new Error('Account restore verification failed');
+    await upstashCommand(['SET', markerKey, JSON.stringify({
+      imported: imported.length, added, replaced, before: oldText ? Object.keys(JSON.parse(oldText)).length : 0,
+      after: Object.keys(saved).length, backupKey: oldText ? backupKey : null
+    })]);
+    accounts = saved;
+    console.log('Legacy account import completed:', JSON.stringify({ imported: imported.length, added, replaced, after: Object.keys(saved).length, backupCreated: !!oldText }));
+    await releaseWorldLease(lease.token, null); released = true;
+    return { imported: imported.length, added, replaced };
+  } catch (e) {
+    if (!released) try { await releaseWorldLease(lease.token, null); } catch {}
+    throw e;
+  }
+}
+
 async function initRedisAdapter() {
   if (!IS_VERCEL) return;
   if (storage.kind !== 'upstash') throw new Error('請在 Vercel 設定 Upstash Redis REST URL 與 Token。');
@@ -634,6 +691,11 @@ async function start() {
     catch (e) { console.error('讀取帳號資料失敗：', e.message); if (!IS_VERCEL) process.exit(1); else throw e; }
   }
   await loadWorldForStart();
+  if (IS_VERCEL && process.env.MMO_LEGACY_ACCOUNTS_IMPORT) {
+    const importStatus = await restoreLegacyAccountsOnce();
+    accounts = normalizeAccounts((await storage.loadAccounts()) || {});
+    console.log('Legacy account import status:', JSON.stringify(importStatus));
+  }
   if (IS_VERCEL && process.env.V11_AUTO_RESTORE_V10 === '1') {
     const restoreResult = await restoreV10SeedOnce();
     console.log('V10 one-time restore status:', JSON.stringify(restoreResult.summary || { alreadyRestored: true }));
