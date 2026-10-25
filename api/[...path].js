@@ -555,7 +555,48 @@ async function restoreV10SeedOnce() {
 async function restoreLegacyAccountsOnce() {
   const raw = process.env.MMO_LEGACY_ACCOUNTS_IMPORT;
   if (!IS_VERCEL || storage.kind !== 'upstash' || !raw) return { skipped: true };
-  const source = JSON.parse(raw);
+  // Accept raw JSON and common .env copy/paste formats. Never log the supplied value.
+  function parseLegacyImportValue(value) {
+    const input = String(value).replace(/^\\uFEFF/, '').trim();
+    const candidates = [];
+    const add = v => {
+      if (typeof v === 'string') {
+        v = v.trim();
+        if (v && !candidates.includes(v)) candidates.push(v);
+      }
+    };
+    add(input);
+    add(input.replace(/^export\\s+MMO_LEGACY_ACCOUNTS_IMPORT\\s*=\\s*/, ''));
+    // A user may paste the full .env line into Vercel's Value field.
+    add(input.replace(/^\\s*(?:export\\s+)?MMO_LEGACY_ACCOUNTS_IMPORT\\s*=\\s*/, ''));
+    // Try a few safe normalizations without printing the sensitive contents.
+    for (let i = 0; i < candidates.length; i++) {
+      const candidate = candidates[i];
+      if (candidate.length >= 2 && candidate[0] === '"' && candidate[candidate.length - 1] === '"') {
+        try { add(JSON.parse(candidate)); } catch {}
+      }
+      if (candidate.length >= 2 && candidate[0] === "'" && candidate[candidate.length - 1] === "'") {
+        add(candidate.slice(1, -1));
+      }
+      if (candidate.startsWith('{') && candidate.includes('\\\\\\"')) {
+        add(candidate.replace(/\\\\\\"/g, '"'));
+      }
+      if (candidate.startsWith('{') && candidate.includes('\\\"')) {
+        add(candidate.replace(/\\\"/g, '"'));
+      }
+    }
+    for (const candidate of candidates) {
+      try {
+        let parsed = JSON.parse(candidate);
+        if (typeof parsed === 'string') {
+          try { parsed = JSON.parse(parsed); } catch {}
+        }
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+      } catch {}
+    }
+    throw new Error('Invalid legacy account import JSON. Set MMO_LEGACY_ACCOUNTS_IMPORT to the account JSON object, or paste the .env line; the value could not be parsed.');
+  }
+  const source = parseLegacyImportValue(raw);
   if (!source || typeof source !== 'object' || Array.isArray(source)) throw new Error('Invalid legacy account file');
   const imported = Object.entries(source);
   for (const [key, a] of imported) {
