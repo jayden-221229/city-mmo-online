@@ -18,9 +18,20 @@ const WORLD_LOCK_KEY = WORLD_KEY + ':vercel-lock';
 
 const app = express();
 const server = http.createServer(app);
+function restoreRewrittenApiPath(req) {
+  try {
+    const u = new URL(req.url, 'http://localhost');
+    const target = u.searchParams.get('__path');
+    if (!target) return;
+    u.searchParams.delete('__path');
+    req.url = '/api' + (target.startsWith('/') ? target : '/' + target) + (u.search ? u.search : '');
+  } catch {}
+}
+server.prependListener('upgrade', req => restoreRewrittenApiPath(req));
 // GitHub Pages 前端與 Node.js 後端通常是不同網域；同一個 CORS_ORIGIN 設定也用於 REST 登入 API。
 // 建議正式部署時把 CORS_ORIGIN 設為你的 Pages 網域來源，例如 https://your-name.github.io（不要附路徑）。
 const corsOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean) : ['*'];
+app.use((req, res, next) => { restoreRewrittenApiPath(req); next(); });
 app.use((req, res, next) => {
   if (!IS_VERCEL || !bootPromise) return next();
   bootPromise.then(() => {

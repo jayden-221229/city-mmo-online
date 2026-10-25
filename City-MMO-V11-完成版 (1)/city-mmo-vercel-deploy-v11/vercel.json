@@ -17,5 +17,15 @@
       ]
     }
   ],
-  "framework": null
+  "framework": null,
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/[...path].js?__path=/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
 }
