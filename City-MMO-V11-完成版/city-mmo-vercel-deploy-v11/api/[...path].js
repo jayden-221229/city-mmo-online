@@ -623,6 +623,10 @@ async function start() {
     catch (e) { console.error('讀取帳號資料失敗：', e.message); if (!IS_VERCEL) process.exit(1); else throw e; }
   }
   await loadWorldForStart();
+  if (IS_VERCEL && process.env.V11_AUTO_RESTORE_V10 === '1') {
+    const restoreResult = await restoreV10SeedOnce();
+    console.log('V10 one-time restore status:', JSON.stringify(restoreResult.summary || { alreadyRestored: true }));
+  }
   if (IS_VERCEL) {
     // Vercel functions are instance-based. Each instance shares world state through Upstash and broadcasts through Socket.IO's Redis adapter.
     setInterval(() => { withWorldTransaction(() => ({ ok: true })).catch(e => console.error('scheduled world tick failed:', e.message)); }, 30000);
