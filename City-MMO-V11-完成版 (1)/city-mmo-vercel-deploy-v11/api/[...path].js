@@ -64,6 +64,19 @@ function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
 }
 function validUsername(name) { return typeof name === 'string' && /^[a-zA-Z0-9_-]{3,16}$/.test(name); }
 app.use(express.json({ limit: '10kb' }));
+app.post('/api/admin/restore-v10', async (req, res) => {
+  const expected = process.env.V11_RESTORE_TOKEN;
+  const authHeader = String(req.headers.authorization || '');
+  const supplied = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!expected) return res.status(404).json({ error: 'not_found' });
+  const a = Buffer.from(expected), b = Buffer.from(supplied);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(404).json({ error: 'not_found' });
+  try { res.json(await restoreV10SeedOnce()); }
+  catch (e) {
+    console.error('V10 seed restore failed:', e.message);
+    res.status(500).json({ error: 'restore_failed', message: '資料合併失敗；原存檔仍保留，請檢查部署日誌。' });
+  }
+});
 app.post(['/api/auth/register', '/api/socket-io/api/auth/register'], async (req, res) => {
   try {
     const result = await withWorldTransaction(async () => {
@@ -371,7 +384,7 @@ async function loadWorld() {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function upstashCommand(command) {
-  const url = process.env.UPSTASH_REDIS_REST_URL, token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.mmo_KV_REST_API_URL, token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.mmo_KV_REST_API_TOKEN;
   if (!url || !token) throw new Error('缺少 UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN');
   const response = await fetch(url, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(command) });
   let data;
@@ -409,19 +422,148 @@ async function releaseWorldLease(token, worldText) {
   if (Number(result) !== 1) throw new Error('世界鎖定逾時；本次資料未寫入，請重試。');
   return result;
 }
+function restoreCounts(j) {
+  return {
+    players: Array.isArray(j && j.players) ? j.players.length : 0,
+    chunks: Array.isArray(j && j.chunks) ? j.chunks.length : 0,
+    links: Array.isArray(j && j.links) ? j.links.length : 0,
+    pending: Array.isArray(j && j.pending) ? j.pending.length : 0,
+    transitRoutes: Array.isArray(j && j.transitRoutes) ? j.transitRoutes.length : 0,
+  };
+}
+
+function mergeV10SeedWorld(current, seed) {
+  const base = current && typeof current === 'object' ? current : {};
+  const players = Array.isArray(base.players) ? base.players.slice() : [];
+  const playerIds = new Set(players.filter(p => p && p.id).map(p => p.id));
+  let addedPlayers = 0;
+  for (const p of (Array.isArray(seed.players) ? seed.players : [])) {
+    if (!p || !p.id || playerIds.has(p.id)) continue;
+    players.push(p); playerIds.add(p.id); addedPlayers++;
+  }
+  const chunks = Array.isArray(base.chunks) ? base.chunks.slice() : [];
+  const chunkMap = new Map(chunks.map((c, i) => [String(c.cx) + ',' + String(c.cy), i]));
+  let addedChunks = 0, addedTiles = 0, skippedChunkOwnerConflicts = 0;
+  for (const c of (Array.isArray(seed.chunks) ? seed.chunks : [])) {
+    const key = String(c.cx) + ',' + String(c.cy);
+    if (!playerIds.has(c.owner)) continue;
+    if (!chunkMap.has(key)) { chunks.push(c); chunkMap.set(key, chunks.length - 1); addedChunks++; continue; }
+    const existing = chunks[chunkMap.get(key)];
+    if (existing.owner !== c.owner) { skippedChunkOwnerConflicts++; continue; }
+    const tiles = Array.isArray(existing.tiles) ? existing.tiles.slice() : [];
+    const tileIds = new Set(tiles.filter(t => Array.isArray(t)).map(t => String(t[0])));
+    for (const tile of (Array.isArray(c.tiles) ? c.tiles : [])) {
+      if (!Array.isArray(tile) || tile.length < 2 || tileIds.has(String(tile[0]))) continue;
+      tiles.push(tile); tileIds.add(String(tile[0])); addedTiles++;
+    }
+    chunks[chunkMap.get(key)] = { ...existing, tiles };
+  }
+  const links = Array.isArray(base.links) ? base.links.slice() : [];
+  const linkSet = new Set(links);
+  let addedLinks = 0;
+  for (const link of (Array.isArray(seed.links) ? seed.links : [])) {
+    if (typeof link !== 'string') continue;
+    const parts = link.split('|');
+    if (parts.length !== 2 || !playerIds.has(parts[0]) || !playerIds.has(parts[1]) || linkSet.has(link)) continue;
+    links.push(link); linkSet.add(link); addedLinks++;
+  }
+  const pending = Array.isArray(base.pending) ? base.pending.slice() : [];
+  const pendingSet = new Set(pending.filter(r => r).map(r => String(r.from) + '>' + String(r.to)));
+  let addedPending = 0;
+  for (const row of (Array.isArray(seed.pending) ? seed.pending : [])) {
+    if (!row || !playerIds.has(row.from) || !playerIds.has(row.to)) continue;
+    const key = String(row.from) + '>' + String(row.to);
+    if (pendingSet.has(key)) continue;
+    pending.push(row); pendingSet.add(key); addedPending++;
+  }
+  const transitRoutes = Array.isArray(base.transitRoutes) ? base.transitRoutes.slice() : [];
+  const routeIds = new Set(transitRoutes.filter(r => r && r.id).map(r => r.id));
+  let addedTransitRoutes = 0;
+  for (const row of (Array.isArray(seed.transitRoutes) ? seed.transitRoutes : [])) {
+    if (!row || !row.id || routeIds.has(row.id) || !playerIds.has(row.owner)) continue;
+    transitRoutes.push(row); routeIds.add(row.id); addedTransitRoutes++;
+  }
+  const merged = { ...seed, ...base, players, chunks, links, pending, transitRoutes };
+  if (!Array.isArray(merged.chatLog)) merged.chatLog = [];
+  if (!Number.isFinite(Number(merged.lastEconomyAt))) merged.lastEconomyAt = 0;
+  if (!Number.isFinite(Number(merged.nextEventAt))) merged.nextEventAt = 0;
+  return { world: merged, added: { players: addedPlayers, chunks: addedChunks, tiles: addedTiles, skippedChunkOwnerConflicts, links: addedLinks, pending: addedPending, transitRoutes: addedTransitRoutes } };
+}
+
+const SAVE_WORLD_AND_MARK_RESTORE_LUA = `
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+redis.call('SET', KEYS[2], ARGV[2])
+redis.call('SET', KEYS[3], ARGV[3])
+redis.call('DEL', KEYS[1])
+return 1
+`;
+
+async function restoreV10SeedOnce() {
+  if (!IS_VERCEL || storage.kind !== 'upstash') throw new Error('雲端存檔尚未就緒。');
+  const markerKey = WORLD_KEY + ':v10-seed-restore-complete';
+  const marker = await upstashCommand(['GET', markerKey]);
+  if (marker) { try { return { ok: true, alreadyRestored: true, summary: JSON.parse(marker) }; } catch { return { ok: true, alreadyRestored: true }; } }
+  const seedPath = path.join(__dirname, '../server/restore-seed-world.json');
+  const seed = JSON.parse(await fs.promises.readFile(seedPath, 'utf8'));
+  const lease = await acquireWorldLease();
+  let finished = false;
+  try {
+    const markerAgain = await upstashCommand(['GET', markerKey]);
+    if (markerAgain) {
+      await releaseWorldLease(lease.token, null); finished = true;
+      try { return { ok: true, alreadyRestored: true, summary: JSON.parse(markerAgain) }; } catch { return { ok: true, alreadyRestored: true }; }
+    }
+    const current = lease.worldText ? JSON.parse(lease.worldText) : null;
+    const merged = mergeV10SeedWorld(current, seed);
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const accountsKey = process.env.ACCOUNTS_KEY || 'city-mmo:accounts';
+    const backupWorldKey = WORLD_KEY + ':backup-v10-' + stamp;
+    const backupAccountsKey = accountsKey + ':backup-v10-' + stamp;
+    let worldBackupCreated = false, accountsBackupCreated = false;
+    if (lease.worldText) { await upstashCommand(['SET', backupWorldKey, lease.worldText]); worldBackupCreated = true; }
+    const accountText = await upstashCommand(['GET', accountsKey]);
+    if (accountText) { await upstashCommand(['SET', backupAccountsKey, accountText]); accountsBackupCreated = true; }
+    const summary = {
+      version: 'v10-to-v11-merge', completedAt: new Date().toISOString(),
+      before: restoreCounts(current), after: restoreCounts(merged.world), added: merged.added,
+      backupWorldKey: worldBackupCreated ? backupWorldKey : null,
+      backupAccountsKey: accountsBackupCreated ? backupAccountsKey : null,
+    };
+    const saved = await upstashCommand(['EVAL', SAVE_WORLD_AND_MARK_RESTORE_LUA, '3', WORLD_LOCK_KEY, WORLD_KEY, markerKey, lease.token, JSON.stringify(merged.world), JSON.stringify(summary)]);
+    if (Number(saved) !== 1) throw new Error('無法原子儲存合併結果；請保留備份並重試。');
+    finished = true;
+    world.fromJSON(merged.world); world.recompute(Date.now()); world.dirty = false; chatLog = world.chatLog;
+    console.log('V10 world merge complete:', JSON.stringify({ before: summary.before, after: summary.after, added: summary.added }));
+    return { ok: true, summary };
+  } catch (e) {
+    if (!finished) { try { await releaseWorldLease(lease.token, null); } catch (unlockError) { console.error('V10 restore lock release failed:', unlockError.message); } }
+    throw e;
+  }
+}
 async function initRedisAdapter() {
   if (!IS_VERCEL) return;
-  if (storage.kind !== 'upstash') throw new Error('請在 Vercel 設定 UPSTASH_REDIS_REST_URL 與 UPSTASH_REDIS_REST_TOKEN。');
+  if (storage.kind !== 'upstash') throw new Error('請在 Vercel 設定 Upstash Redis REST URL 與 Token。');
   const redisUrl = process.env.UPSTASH_REDIS_URL || process.env.mmo_REDIS_URL;
-  if (!redisUrl) throw new Error('請在 Vercel 設定 UPSTASH_REDIS_URL（或既有的 mmo_REDIS_URL），供多人跨執行個體廣播使用。');
+  if (!redisUrl) {
+    console.warn('Upstash TCP Pub/Sub URL 未設定；使用 Socket.IO 本機 adapter，世界存檔仍透過 REST 共用。');
+    return;
+  }
   const IORedis = require('ioredis');
   const { createAdapter } = require('@socket.io/redis-adapter');
-  redisPubClient = new IORedis(redisUrl, { lazyConnect: true, maxRetriesPerRequest: null, connectTimeout: 10000, retryStrategy: n => Math.min(n * 300, 3000) });
+  redisPubClient = new IORedis(redisUrl, { lazyConnect: true, maxRetriesPerRequest: null, connectTimeout: 8000, retryStrategy: n => Math.min(n * 300, 3000) });
   redisSubClient = redisPubClient.duplicate();
   redisPubClient.on('error', e => console.error('Upstash Redis publisher:', e.message));
   redisSubClient.on('error', e => console.error('Upstash Redis subscriber:', e.message));
-  await Promise.all([redisPubClient.connect(), redisSubClient.connect()]);
-  io.adapter(createAdapter(redisPubClient, redisSubClient, { key: 'city-mmo:socket.io' }));
+  try {
+    await Promise.all([redisPubClient.connect(), redisSubClient.connect()]);
+    io.adapter(createAdapter(redisPubClient, redisSubClient, { key: 'city-mmo:socket.io' }));
+    console.log('Socket.IO Redis adapter connected.');
+  } catch (e) {
+    console.error('Socket.IO Redis adapter unavailable; using in-memory adapter for this function instance:', e.message);
+    try { if (redisPubClient) redisPubClient.disconnect(); } catch {}
+    try { if (redisSubClient) redisSubClient.disconnect(); } catch {}
+    redisPubClient = null; redisSubClient = null;
+  }
 }
 function tickWorldIfDue(now = Date.now()) {
   const last = Number(world.lastEconomyAt) || 0;
@@ -481,6 +623,10 @@ async function start() {
     catch (e) { console.error('讀取帳號資料失敗：', e.message); if (!IS_VERCEL) process.exit(1); else throw e; }
   }
   await loadWorldForStart();
+  if (IS_VERCEL && process.env.V11_AUTO_RESTORE_V10 === '1') {
+    const restoreResult = await restoreV10SeedOnce();
+    console.log('V10 one-time restore status:', JSON.stringify(restoreResult.summary || { alreadyRestored: true }));
+  }
   if (IS_VERCEL) {
     // Vercel functions are instance-based. Each instance shares world state through Upstash and broadcasts through Socket.IO's Redis adapter.
     setInterval(() => { withWorldTransaction(() => ({ ok: true })).catch(e => console.error('scheduled world tick failed:', e.message)); }, 30000);
