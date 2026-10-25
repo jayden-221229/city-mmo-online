@@ -1,0 +1,192 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#30383b;color:white;font-family:system-ui}canvas{display:block;background:#454f4e}h2{padding:4px 16px;margin:0}</style></head><body><h2>City MMO — Isometric vehicle preview v7</h2><canvas id="c" width="900" height="430"></canvas><script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d'); const TW=64, TH=32;
+function isoX(x,y){return (x-y)*32} function isoY(x,y){return (x+y)*16}
+function carScreenPoint(x,y,car){return {x:170+x*95,y:150+y*125}}
+function carRoundRectPath(x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + rr, y); ctx.lineTo(x + w - rr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rr); ctx.lineTo(x + w, y + h - rr);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h); ctx.lineTo(x + rr, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rr); ctx.lineTo(x, y + rr);
+  ctx.quadraticCurveTo(x, y, x + rr, y); ctx.closePath();
+}
+function carPolygon(points, fill, stroke) {
+  ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill();
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 0.55; ctx.stroke(); }
+}
+function carTone(color, amount) {
+  // Shift a vehicle paint colour lighter/darker so its top and side planes read as volume.
+  const match = /^#?([0-9a-f]{6})$/i.exec(color || '');
+  if (!match) return color || '#3984c6';
+  const hex = match[1];
+  const channels = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16));
+  return '#' + channels.map(v => {
+    const next = amount >= 0 ? v + (255 - v) * amount : v * (1 + amount);
+    return Math.max(0, Math.min(255, Math.round(next))).toString(16).padStart(2, '0');
+  }).join('');
+}
+function drawCar(o) {
+  // Draw cars in the same isometric projection as buildings: diamond-shaped top faces,
+  // vertical side walls, raised cabins, and darker extrusion faces. Do not rotate a flat
+  // screen-space rectangle; the car's footprint lives on the actual isometric ground plane.
+  const car = o.car, kind = car.kind || 'car';
+  const lanePoint = carScreenPoint(o.x, o.y, car), ix = lanePoint.x, iy = lanePoint.y;
+  const dx = car.tx - car.fx, dy = car.ty - car.fy;
+  const alongX = Math.abs(dx) >= Math.abs(dy);
+  const forward = alongX ? Math.sign(dx || 1) : Math.sign(dy || 1);
+  const length = kind === 'bus' ? 0.60 : kind === 'truck' ? 0.54 : 0.43;
+  const width = kind === 'bus' ? 0.275 : kind === 'truck' ? 0.245 : 0.225;
+  const bodyBottom = 0.65;
+  const bodyTop = kind === 'bus' ? 5.9 : kind === 'truck' ? 3.15 : 3.25;
+  const cabinTop = kind === 'bus' ? bodyTop : kind === 'truck' ? bodyTop + 2.65 : bodyTop + 2.45;
+  const paint = car.c || '#3984c6';
+  const edge = 'rgba(17,27,34,.82)';
+
+  // Project world-grid-relative coordinates to the same 64x32 isometric plane as shapes.js.
+  const P = (gx, gy, z = 0) => [ix + (gx - gy) * TW / 2, iy + (gx + gy) * TH / 2 - z];
+  const poly = (points, fill, stroke = edge) => carPolygon(points.map(([x, y, z = 0]) => P(x, y, z)), fill, stroke);
+  const bounds = (alongCenter, alongLength, lateralCenter = 0, lateralWidth = width) => {
+    const a0 = alongCenter - alongLength / 2, a1 = alongCenter + alongLength / 2;
+    const l0 = lateralCenter - lateralWidth / 2, l1 = lateralCenter + lateralWidth / 2;
+    return alongX ? { x0: a0, x1: a1, y0: l0, y1: l1 } : { x0: l0, x1: l1, y0: a0, y1: a1 };
+  };
+  const topFace = (b, z, color, stroke = edge) => poly([[b.x0,b.y0,z],[b.x1,b.y0,z],[b.x1,b.y1,z],[b.x0,b.y1,z]], color, stroke);
+  const sideXFace = (b, z0, z1, color, stroke = edge) => poly([[b.x1,b.y0,z1],[b.x1,b.y1,z1],[b.x1,b.y1,z0],[b.x1,b.y0,z0]], color, stroke);
+  const sideYFace = (b, z0, z1, color, stroke = edge) => poly([[b.x0,b.y1,z1],[b.x1,b.y1,z1],[b.x1,b.y1,z0],[b.x0,b.y1,z0]], color, stroke);
+  const isoBox = (b, z0, z1, col, opts = {}) => {
+    // The two camera-facing walls are shaded independently, exactly like the building boxes.
+    sideXFace(b, z0, z1, opts.x || carTone(col, -0.38), opts.stroke || edge);
+    sideYFace(b, z0, z1, opts.y || carTone(col, -0.24), opts.stroke || edge);
+    topFace(b, z1, opts.top || carTone(col, 0.16), opts.stroke || edge);
+  };
+  const longSideWindows = (b, z0, z1, count, glass = '#527d8c') => {
+    // Windows live on the long visible wall and are separated by painted pillars.
+    const lo = alongX ? b.x0 : b.y0, hi = alongX ? b.x1 : b.y1;
+    const span = hi - lo, gap = span / count, margin = span * 0.035;
+    for (let i = 0; i < count; i++) {
+      const a = lo + i * gap + margin, c = lo + (i + 1) * gap - margin;
+      let pts;
+      if (alongX) pts = [[a,b.y1,z1],[c,b.y1,z1],[c,b.y1,z0],[a,b.y1,z0]];
+      else pts = [[b.x1,a,z1],[b.x1,c,z1],[b.x1,c,z0],[b.x1,a,z0]];
+      poly(pts, glass, 'rgba(25,44,54,.86)');
+      // A thin light strip gives each pane a glass reflection.
+      const stripTop = z1 - Math.max(0.28, (z1-z0)*0.16);
+      let highlight;
+      if (alongX) highlight = [[a+gap*.06,b.y1,stripTop],[c-gap*.08,b.y1,stripTop],[c-gap*.08,b.y1,stripTop-.16],[a+gap*.06,b.y1,stripTop-.16]];
+      else highlight = [[b.x1,a+gap*.06,stripTop],[b.x1,c-gap*.08,stripTop],[b.x1,c-gap*.08,stripTop-.16],[b.x1,a+gap*.06,stripTop-.16]];
+      poly(highlight, 'rgba(229,249,255,.56)', 'rgba(229,249,255,.10)');
+    }
+  };
+  const endGlass = (b, z0, z1, glass) => {
+    // The camera-facing positive-axis end becomes either the windscreen or the rear glass,
+    // depending on the car's travel direction.
+    if (alongX) poly([[b.x1,b.y0 + width*.13,z1],[b.x1,b.y1 - width*.13,z1],[b.x1,b.y1 - width*.13,z0],[b.x1,b.y0 + width*.13,z0]], glass, 'rgba(25,44,54,.9)');
+    else poly([[b.x0 + width*.13,b.y1,z1],[b.x1 - width*.13,b.y1,z1],[b.x1 - width*.13,b.y1,z0],[b.x0 + width*.13,b.y1,z0]], glass, 'rgba(25,44,54,.9)');
+    if (alongX) poly([[b.x1,b.y0 + width*.2,z1-.18],[b.x1,b.y0 + width*.38,z1-.18],[b.x1,b.y0 + width*.38,z1-.34],[b.x1,b.y0 + width*.2,z1-.34]], 'rgba(238,252,255,.58)', 'rgba(255,255,255,.12)');
+    else poly([[b.x0 + width*.2,b.y1,z1-.18],[b.x0 + width*.38,b.y1,z1-.18],[b.x0 + width*.38,b.y1,z1-.34],[b.x0 + width*.2,b.y1,z1-.34]], 'rgba(238,252,255,.58)', 'rgba(255,255,255,.12)');
+  };
+  const longSideBand = (b, z0, z1, color) => {
+    if (alongX) poly([[b.x0 + .025,b.y1,z1],[b.x1 - .025,b.y1,z1],[b.x1 - .025,b.y1,z0],[b.x0 + .025,b.y1,z0]], color, 'rgba(12,21,28,.35)');
+    else poly([[b.x1,b.y0 + .025,z1],[b.x1,b.y1 - .025,z1],[b.x1,b.y1 - .025,z0],[b.x1,b.y0 + .025,z0]], color, 'rgba(12,21,28,.35)');
+  };
+  const point = (along, lateral, z) => alongX ? P(along, lateral, z) : P(lateral, along, z);
+  const shadeCol = (hex, amt) => carTone(hex, amt);
+
+  // A soft ground shadow stays on the asphalt; its diamond orientation follows the map grid.
+  poly([[-length*.52,-width*.56,0.15],[length*.52,-width*.56,0.15],[length*.52,width*.56,0.15],[-length*.52,width*.56,0.15]], 'rgba(0,0,0,.28)', 'rgba(0,0,0,0)');
+
+  // Wheels are shown as separate dark sidewall ellipses, then partly covered by the body.
+  const axle = length * (kind === 'bus' ? 0.34 : 0.31);
+  for (const a of [-axle, axle]) for (const side of [-1, 1]) {
+    const [wx, wy] = point(a, side * (width*.49), 0.55);
+    ctx.beginPath(); ctx.ellipse(wx, wy, 1.75, 1.22, alongX ? 0.46 : -0.46, 0, Math.PI * 2);
+    ctx.fillStyle = '#171c22'; ctx.fill(); ctx.strokeStyle = '#06090c'; ctx.lineWidth = .45; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(wx, wy, .82, .63, alongX ? 0.46 : -0.46, 0, Math.PI * 2);
+    ctx.fillStyle = '#69747d'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(wx-.12, wy-.10, .33, .25, alongX ? 0.46 : -0.46, 0, Math.PI * 2);
+    ctx.fillStyle = '#c1c8cc'; ctx.fill();
+  }
+
+  const shell = bounds(0, length, 0, width);
+  const shellBottom = bodyBottom;
+  // Lower chassis and main shell: unlike the old rotated rectangle, these are actual iso box faces.
+  isoBox(shell, shellBottom, bodyTop, paint, {
+    x: shadeCol(paint, -0.43), y: shadeCol(paint, -0.27), top: shadeCol(paint, 0.13),
+  });
+  longSideBand(shell, shellBottom + .35, shellBottom + .82, shadeCol(paint, -.42));
+
+  if (kind === 'truck') {
+    // Raised cargo block and a separate cab create the same layered block geometry used by buildings.
+    const cargo = bounds(-forward * length * .17, length * .55, 0, width * .88);
+    isoBox(cargo, bodyTop - .12, bodyTop + 2.85, '#e0e5e6', { x: '#9ba8b0', y: '#bdc7cb', top: '#f8faf8' });
+    const cargoSideZ = bodyTop + 1.05;
+    longSideBand(cargo, cargoSideZ, cargoSideZ + .16, '#aeb8bd');
+    for (let i = 1; i <= 3; i++) {
+      const along = (alongX ? cargo.x0 : cargo.y0) + ((alongX ? cargo.x1-cargo.x0 : cargo.y1-cargo.y0) * i / 4);
+      if (alongX) poly([[along,cargo.y1,cargoSideZ+.12],[along+.006,cargo.y1,cargoSideZ+.12],[along+.006,cargo.y1,bodyTop+2.65],[along,cargo.y1,bodyTop+2.65]], '#a2adb4', 'rgba(0,0,0,0)');
+      else poly([[cargo.x1,along,cargoSideZ+.12],[cargo.x1,along+.006,cargoSideZ+.12],[cargo.x1,along+.006,bodyTop+2.65],[cargo.x1,along,bodyTop+2.65]], '#a2adb4', 'rgba(0,0,0,0)');
+    }
+    const cab = bounds(forward * length * .265, length * .34, 0, width * .86);
+    const cabZ = bodyTop - .02, cabH = 2.55;
+    isoBox(cab, cabZ, cabZ + cabH, paint, { x: shadeCol(paint,-.32), y: shadeCol(paint,-.18), top: shadeCol(paint,.27) });
+    longSideWindows(cab, cabZ + .68, cabZ + cabH - .42, 1, '#4a7484');
+    endGlass(cab, cabZ + .68, cabZ + cabH - .34, '#6e9dab');
+    // Sunlit edge on the cargo top catches the same direction of light as the rooftops.
+    poly([[cargo.x0+.025,cargo.y0+.025,bodyTop+2.87],[cargo.x1-.025,cargo.y0+.025,bodyTop+2.87],[cargo.x1-.025,cargo.y0+.035,bodyTop+2.87]], 'rgba(255,255,255,.42)', 'rgba(255,255,255,0)');
+  } else if (kind === 'bus') {
+    // Tall bus body with a roof panel, a row of individual windows, and a front/rear glass panel.
+    longSideWindows(shell, 2.15, 5.15, 5, '#426f7d');
+    endGlass(shell, 2.45, 5.25, forward > 0 ? '#6b9dad' : '#456f80');
+    const roof = bounds(0, length*.78, 0, width*.68);
+    isoBox(roof, bodyTop, bodyTop + .56, shadeCol(paint,.08), { x: shadeCol(paint,-.25), y: shadeCol(paint,-.12), top: shadeCol(paint,.30) });
+    // Door strip on the visible long wall.
+    longSideBand(shell, 1.05, 4.95, 'rgba(37,61,70,.16)');
+  } else {
+    // Passenger car: a raised glass cabin on a low bonnet/body, in the same box-and-roof style.
+    const cabLength = length * .47, cabWidth = width * .77;
+    const cab = bounds(-forward * length * .075, cabLength, 0, cabWidth);
+    const cabZ = bodyTop - .03, cabH = 2.35;
+    isoBox(cab, cabZ, cabZ + cabH, shadeCol(paint,.03), { x: shadeCol(paint,-.28), y: shadeCol(paint,-.17), top: shadeCol(paint,.26) });
+    longSideWindows(cab, cabZ + .53, cabZ + cabH - .38, 2, '#456f80');
+    endGlass(cab, cabZ + .55, cabZ + cabH - .34, forward > 0 ? '#8db9c9' : '#496f7e');
+    // A low raised bonnet plane at the leading end makes the vehicle look like a tiny 3D model.
+    const hoodBounds = bounds(forward * length * .365, length*.19, 0, width*.60);
+    topFace(hoodBounds, bodyTop + .025, shadeCol(paint,.30), 'rgba(255,255,255,.12)');
+    const hoodStripe = bounds(forward * length * .365, length*.105, -width*.06, width*.18);
+    topFace(hoodStripe, bodyTop + .04, 'rgba(255,255,255,.28)', 'rgba(255,255,255,0)');
+    // Slightly brighter roof inset and dark rim keep a clear roof silhouette at normal zoom.
+    const roof = bounds(-forward * length * .075, cabLength*.68, 0, cabWidth*.63);
+    topFace(roof, cabZ + cabH + .015, shadeCol(paint,.34), 'rgba(255,255,255,.18)');
+  }
+
+  // The camera-facing positive end receives lights: headlights if driving toward it, tail lights otherwise.
+  const frontVisible = forward > 0;
+  const lampColor = frontVisible ? '#fff0b6' : '#e3413d';
+  const lampZ = kind === 'bus' ? 1.65 : 1.48;
+  for (const lat of [-width*.28, width*.28]) {
+    const px = alongX ? length*.49 : lat;
+    const py = alongX ? lat : length*.49;
+    const [lx, ly] = P(px, py, lampZ);
+    ctx.beginPath(); ctx.ellipse(lx, ly, .86, .58, 0, 0, Math.PI*2);
+    ctx.fillStyle = lampColor; ctx.fill(); ctx.strokeStyle = 'rgba(20,28,34,.55)'; ctx.lineWidth=.35; ctx.stroke();
+  }
+  if (frontVisible) {
+    // Small dark grille sits just inside the front lip.
+    const grille = bounds(length*.485, .012, 0, width*.23);
+    topFace(grille, lampZ + .08, '#39454d', 'rgba(0,0,0,.15)');
+  }
+}
+
+ctx.lineCap='round';ctx.lineJoin='round';
+const samples=[
+ {x:0,y:0,car:{fx:0,fy:0,tx:1,ty:0,kind:'car',c:'#d94343'}},
+ {x:1,y:0,car:{fx:0,fy:0,tx:1,ty:0,kind:'truck',c:'#e99c4b'}},
+ {x:2,y:0,car:{fx:0,fy:0,tx:1,ty:0,kind:'bus',c:'#21b6a8'}},
+ {x:0,y:1,car:{fx:0,fy:0,tx:0,ty:1,kind:'car',c:'#3498db'}},
+ {x:1,y:1,car:{fx:0,fy:0,tx:0,ty:1,kind:'car',c:'#f1c40f'}},
+ {x:2,y:1,car:{fx:0,fy:0,tx:0,ty:1,kind:'truck',c:'#6c8ebf'}}
+];
+for(let y=0;y<430;y+=32){ctx.strokeStyle='rgba(255,255,255,.04)';ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(900,y);ctx.stroke()}
+for(const o of samples) drawCar(o);
+</script></body></html>

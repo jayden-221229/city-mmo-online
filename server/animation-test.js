@@ -1,0 +1,34 @@
+// Regression checks for live visual animations (Node core only).
+'use strict';
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const root = path.join(__dirname, '..');
+const shapes = fs.readFileSync(path.join(root, 'assets/js/shapes.js'), 'utf8');
+const game = fs.readFileSync(path.join(root, 'assets/js/game.js'), 'utf8');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+
+assert(/K\.rotor\s*=/.test(shapes), 'shape kit records animated rotors');
+assert(/K\.rotor\(0, 0, h, 17,/.test(shapes), 'single wind turbine has rotor metadata');
+assert(/K\.rotor\(u, w, z, 7\.5,/.test(shapes), 'wind farm turbines have rotor metadata');
+assert(/c\.top = top; c\.smokes = K\.smokes; c\.rotors = K\.rotors/.test(shapes), 'animated metadata is attached to sprites');
+assert(/function drawRotor\(/.test(game), 'game renderer animates wind turbine rotors');
+assert(/if \(s\.rotors && cam\.z > 0\.35/.test(game), 'rotors are rendered in the live scene');
+assert(/function smoke\(x, y, seed = 0\)/.test(game), 'industrial smoke has a time-based particle effect');
+assert(/if \(s\.smokes && cam\.z > 0\.4\)/.test(game), 'smoke emitters are rendered');
+assert(/function updatePedestrians\(/.test(game) && /function drawPedestrian\(/.test(game), 'pedestrian simulation and renderer exist');
+assert(/updatePedestrians\(dt, roads, gx0, gx1, gy0, gy1\)/.test(game), 'pedestrians are updated each animation frame');
+assert(/function drawSidewalks\(roads\)/.test(game) && /drawSidewalks\(roads\)/.test(game), 'drawn sidewalks follow walkable road edges');
+assert(/const isWalkableRoad =/.test(game) && /\['road', 'oneway', 'bridge'\]/.test(game), 'pedestrians avoid highways and only use sidewalk-eligible road types');
+assert(/pedestrianScreenPoint\(p, wx, wy\)/.test(game) && /pedScreenX/.test(game), 'pedestrians are drawn at a screen-space sidewalk offset');
+assert(/TrafficPhysics\.resolveProgress/.test(game) && /carLaneOffset\(car\)/.test(game), 'cars use following distance and width-aware lanes');
+assert(!/drawCrosswalks\(roads\)/.test(game) && !/function drawCrosswalks\(/.test(game), 'zebra-crossing overlays are removed as requested');
+assert(/const P = \(gx, gy, z = 0\) => \[ix \+ \(gx - gy\) \* TW \/ 2, iy \+ \(gx \+ gy\) \* TH \/ 2 - z\]/.test(game), 'vehicles use the same 64x32 isometric projection as buildings');
+assert(/const isoBox =/.test(game) && /sideXFace/.test(game) && /sideYFace/.test(game), 'vehicle bodies render independent isometric side walls and a top plane');
+assert(/function drawCar\(o\)/.test(game) && /longSideWindows/.test(game) && /const cargo = bounds/.test(game), 'cars, trucks, and buses have raised cabins and distinct 3D details');
+assert(!/ctx\.rotate\(angle\)/.test(game.slice(game.indexOf('function drawCar(o)'), game.indexOf('// ───────────────── 行人動畫'))), 'vehicles are no longer flat screen-space shapes rotated over the road');
+assert(!/stopAtRedSignal|signalGreen\(c\.tx, c\.ty\)/.test(game), 'vehicles are not controlled by traffic lights');
+assert(/transit-network\.js\?v=ui-fold-v11/.test(html) && /traffic-physics\.js\?v=ui-fold-v11/.test(html) && /game\.js\?v=ui-fold-v11/.test(html), 'public transit route helpers and traffic logic are loaded with a cache-busting version');
+assert(/id="transitStationChoice"/.test(html) && /id="transitDraftStops"/.test(html) && /id="transitSaveRoute"/.test(html), 'manual route editor exposes station selection, ordered stops, and save controls');
+assert(/function saveTransitDraft\(/.test(game) && /TransitNetwork\.buildOrderedRoute/.test(game), 'transit routes are player-defined and use their chosen station order');
+console.log('animation and road-vehicle regression checks passed');
