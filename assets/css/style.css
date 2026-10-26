@@ -284,3 +284,77 @@ body.ui-hidden #uiMasterToggle { top:12px; right:12px; }
   #minimapRestoreChip, #questsRestoreChip { display:none!important; }
   body.social-collapsed #socialRestoreChip { display:inline-flex; }
 }
+
+
+/* 新玩家选择与逐步高亮教学 */
+#cityOnboardingChoice[hidden], #cityTutorial[hidden], #cityTourMapMarker[hidden] { display:none!important; }
+#cityOnboardingChoice {
+  position:fixed; inset:0; z-index:11000; display:flex; align-items:center; justify-content:center;
+  padding:18px; background:rgba(3,10,16,.86); backdrop-filter:blur(8px); color:var(--text);
+}
+.city-onboarding-card {
+  width:min(100%,470px); padding:28px; border:1px solid rgba(97,215,205,.35); border-radius:22px;
+  background:linear-gradient(145deg,rgba(17,42,55,.99),rgba(8,21,31,.99));
+  box-shadow:0 26px 90px #000b;
+}
+.city-onboarding-kicker { color:#83e9dc; font-size:12px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+.city-onboarding-card h2 { margin:8px 0 10px; font-size:clamp(23px,4vw,30px); line-height:1.2; }
+.city-onboarding-card p { color:var(--muted); line-height:1.65; margin:0 0 18px; }
+.city-onboarding-options { display:grid; gap:10px; }
+.city-onboarding-options button { min-height:52px; text-align:left; padding:12px 15px; font-weight:800; border-radius:12px; }
+.city-onboarding-options button small { display:block; font-size:12px; font-weight:500; color:inherit; opacity:.78; margin-top:4px; }
+#cityTourSkipChoice { border-color:rgba(97,215,205,.25); background:rgba(255,255,255,.035); }
+#cityTutorial {
+  position:fixed; inset:0; z-index:12000; color:var(--text); pointer-events:none;
+}
+.city-tour-mask {
+  position:fixed; z-index:1; background:rgba(2,8,13,.79); pointer-events:auto;
+  transition:all .16s ease-out;
+}
+#cityTourCard {
+  position:fixed; z-index:3; width:min(410px,calc(100vw - 24px)); padding:18px 18px 14px;
+  border:1px solid rgba(105,232,213,.62); border-radius:17px;
+  background:linear-gradient(145deg,rgba(14,36,48,.99),rgba(5,18,27,.99));
+  box-shadow:0 16px 54px #000b,0 0 0 1px rgba(105,232,213,.11);
+  pointer-events:auto; max-height:calc(100vh - 24px); overflow:auto;
+}
+#cityTourCounter { font-size:11px; letter-spacing:.08em; color:#81e7db; font-weight:900; margin-bottom:8px; }
+#cityTourCard h2 { font-size:20px; line-height:1.25; margin:0 0 9px; }
+#cityTourText { color:#d1e0e8; line-height:1.65; font-size:14px; margin:0 0 15px; }
+.city-tour-actions { display:flex; gap:8px; align-items:center; }
+.city-tour-actions button { min-height:38px; }
+#cityTourNext { flex:1; }
+#cityTourSkipStep { flex:0 0 auto; }
+#cityTourSkipStep[hidden] { display:none!important; }
+#cityTourExit {
+  display:block; margin:10px auto 0; padding:5px 9px; font-size:12px; color:var(--muted);
+  background:transparent; border-color:transparent;
+}
+#cityTourNext:disabled { cursor:wait; opacity:.75; }
+.city-tour-target {
+  outline:3px solid #75f4df!important; outline-offset:4px!important;
+  box-shadow:0 0 0 6px rgba(91,233,211,.18),0 0 24px rgba(91,233,211,.65)!important;
+  border-radius:10px!important; animation:city-tour-pulse 1.6s ease-in-out infinite;
+}
+@keyframes city-tour-pulse { 0%,100% { outline-color:#75f4df; } 50% { outline-color:#fff; } }
+#cityTourMapMarker {
+  position:fixed; z-index:2; border:2px dashed #78f3df; border-radius:18px;
+  background:rgba(74,214,194,.08); box-shadow:inset 0 0 0 2px rgba(3,13,20,.18),0 0 26px rgba(100,242,219,.19);
+  pointer-events:none;
+}
+#cityTourMapMarker span {
+  position:absolute; top:8px; left:8px; padding:6px 10px; border-radius:8px;
+  color:#e8fffb; background:rgba(4,21,29,.92); border:1px solid rgba(120,243,223,.65);
+  font-size:12px; font-weight:900; white-space:nowrap;
+}
+@media (max-width:600px) {
+  .city-onboarding-card { padding:22px 18px; border-radius:17px; }
+  #cityTourCard { padding:15px 14px 12px; }
+  #cityTourCard h2 { font-size:18px; }
+  #cityTourText { font-size:13px; }
+  .city-tour-actions button { padding:8px; font-size:12px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .city-tour-target { animation:none; }
+  .city-tour-mask { transition:none; }
+}
