@@ -114,6 +114,109 @@
   def('university', 'service', '大學',       { unlock: 800, jobs: 60, cost: 14000, upkeep: 12, h: 28, color: '#457b9d', uses: { road: 1, power: 20, water: 12 }, happy: 7 });
   def('monument',   'service', '勝利紀念碑', { unlock: 25000, cost: 250000, h: 70, color: '#ffd166', uses: { road: 1 }, happy: 20 });
 
+
+  // ── 城市擴充包：100 款新建築 ──
+  def("tram_depot", "transport", "輕軌電車車庫", {architecture:"utility",color:"#4c9caa",unlock:250,cost:4200,h:18,jobs:24,upkeep:3,uses:{road:1,power:8,water:2},happy:1});
+  def("ferry_terminal", "transport", "海灣渡輪碼頭", {architecture:"harbor",color:"#76a8bd",unlock:250,cost:5600,h:16,jobs:28,upkeep:4,uses:{road:1,power:6,water:2},happy:2,needs:"shore"});
+  def("bicycle_hub", "transport", "公共單車租借站", {architecture:"market",color:"#55a88b",unlock:60,cost:650,h:8,jobs:2,upkeep:0.25,uses:{road:1,power:1},happy:1.2});
+  def("taxi_depot", "transport", "計程車服務中心", {architecture:"glass",color:"#e0b35a",unlock:60,cost:1800,h:12,jobs:9,upkeep:1.2,uses:{road:1,power:3},happy:0.8});
+  def("parking_garage", "transport", "多層立體停車場", {architecture:"midrise",color:"#8597a5",unlock:60,cost:3200,h:24,jobs:12,upkeep:1.5,uses:{road:1,power:4,water:1},happy:0.5});
+  def("park_and_ride", "transport", "轉乘停車廣場", {architecture:"plaza",color:"#93b78b",unlock:250,cost:4800,h:10,jobs:8,upkeep:1.5,uses:{road:1,power:3},happy:1.5});
+  def("monorail_station", "transport", "單軌列車車站", {architecture:"glass",color:"#8cadd0",unlock:800,cost:8800,h:22,jobs:20,upkeep:5,uses:{road:1,power:14,water:3},happy:2});
+  def("metro_hub", "transport", "城市捷運轉乘中心", {architecture:"civic",color:"#6c9ba9",unlock:800,cost:14500,h:26,jobs:42,upkeep:8,uses:{road:1,power:24,water:4},happy:3});
+  def("train_station", "transport", "城際鐵路車站", {architecture:"civic",color:"#c6b69c",unlock:250,cost:7600,h:20,jobs:26,upkeep:4,uses:{road:1,power:10,water:2},happy:2});
+  def("cargo_terminal", "transport", "貨運集散總站", {architecture:"industrial",color:"#bb8d60",unlock:800,cost:12000,h:19,jobs:46,upkeep:7,uses:{road:1,power:16,water:4},income:8,goods:14,pollution:2});
+  def("city_airport_terminal", "transport", "城市航空客運大樓", {architecture:"glass",color:"#c5d7e6",unlock:2500,cost:65000,h:32,jobs:140,upkeep:45,uses:{road:1,power:55,water:18},income:100,demand:550,pollution:7});
+  def("transit_interchange", "transport", "綜合交通轉運站", {architecture:"campus",color:"#5dabb0",unlock:250,cost:9200,h:18,jobs:30,upkeep:5,uses:{road:1,power:12,water:4},happy:2.5});
+  def("geothermal_plant", "utility", "地熱發電站", {architecture:"utility",color:"#b76f62",unlock:250,cost:5200,h:25,jobs:16,upkeep:5,supplies:{power:135},pollution:0.5});
+  def("hydro_plant", "utility", "水力發電廠", {architecture:"utility",color:"#3d9ca9",unlock:800,cost:14000,h:20,jobs:35,upkeep:8,supplies:{power:420},pollution:0.2});
+  def("battery_storage", "utility", "大型儲能電池站", {architecture:"utility",color:"#6d8fc7",unlock:60,cost:2800,h:13,jobs:5,upkeep:1,supplies:{power:42},pollution:-0.2});
+  def("desalination_plant", "utility", "海水淡化廠", {architecture:"industrial",color:"#58a5c4",unlock:250,cost:7800,h:18,jobs:24,upkeep:6,supplies:{water:145},pollution:1,needs:"shore"});
+  def("sewage_plant", "utility", "污水處理廠", {architecture:"industrial",color:"#6c9fa0",unlock:250,cost:6200,h:17,jobs:20,upkeep:5,uses:{road:1,power:12,water:4},happy:1,pollution:-5});
+  def("smart_grid_station", "utility", "智慧電網控制中心", {architecture:"glass",color:"#73b8c0",unlock:800,cost:9500,h:22,jobs:28,upkeep:4,supplies:{power:180},pollution:-0.5});
+  def("district_heating", "utility", "區域供熱中心", {architecture:"industrial",color:"#d18d67",unlock:250,cost:4700,h:18,jobs:18,upkeep:4,uses:{road:1,power:5,water:5},happy:1,pollution:1});
+  def("hydrogen_plant", "utility", "綠氫能源基地", {architecture:"utility",color:"#6bb7a7",unlock:2500,cost:24000,h:30,jobs:58,upkeep:12,supplies:{power:720},pollution:-1});
+  def("waste_to_energy", "utility", "垃圾焚化發電廠", {architecture:"industrial",color:"#87969c",unlock:800,cost:11800,h:25,jobs:36,upkeep:8,supplies:{power:240},pollution:2});
+  def("rooftop_solar_farm", "utility", "屋頂太陽能園區", {architecture:"solar",color:"#5986b0",unlock:60,cost:1600,h:5,jobs:3,upkeep:0.2,supplies:{power:32},pollution:-0.2});
+  def("water_recycling_plant", "utility", "中水回用中心", {architecture:"industrial",color:"#4e9ba7",unlock:800,cost:9600,h:19,jobs:31,upkeep:6,supplies:{water:230},pollution:-3});
+  def("pumped_storage", "utility", "抽水蓄能電站", {architecture:"utility",color:"#428fba",unlock:2500,cost:22000,h:28,jobs:48,upkeep:13,supplies:{power:850},pollution:0});
+  def("micro_reactor", "utility", "模組化核能電站", {architecture:"utility",color:"#b6c4d0",unlock:8000,cost:76000,h:34,jobs:85,upkeep:55,supplies:{power:3600},pollution:0.8});
+  def("flood_control", "utility", "城市防洪抽水站", {architecture:"utility",color:"#4e91a5",unlock:250,cost:3600,h:12,jobs:14,upkeep:2,uses:{road:1,power:5},happy:0.8});
+  def("rain_harvesting", "utility", "雨水收集中心", {architecture:"utility",color:"#659ca5",unlock:60,cost:1250,h:10,jobs:5,upkeep:0.4,supplies:{water:28},pollution:-0.3});
+  def("marine_energy", "utility", "海洋潮汐電站", {architecture:"utility",color:"#397c9e",unlock:2500,cost:31000,h:26,jobs:65,upkeep:15,supplies:{power:960},pollution:0,needs:"shore"});
+  def("food_factory", "industrial", "食品加工廠", {architecture:"industrial",color:"#c69c68",unlock:60,cost:950,h:13,jobs:18,upkeep:1.8,uses:{road:1,power:6,water:4},tax:4,goods:8,pollution:1.2});
+  def("biotech_lab", "industrial", "生物科技實驗園", {architecture:"glass",color:"#8a9dd0",unlock:800,cost:7200,h:29,jobs:55,upkeep:6,uses:{road:1,power:24,water:12},tax:18,goods:3,pollution:-1});
+  def("ev_factory", "industrial", "電動車製造工廠", {architecture:"industrial",color:"#7298aa",unlock:800,cost:11500,h:23,jobs:70,upkeep:8,uses:{road:1,power:36,water:12},tax:24,goods:15,pollution:1});
+  def("chip_fab", "industrial", "半導體晶片工廠", {architecture:"glass",color:"#6f93b8",unlock:2500,cost:28500,h:30,jobs:120,upkeep:19,uses:{road:1,power:90,water:38},tax:75,goods:20,pollution:2});
+  def("robotics_warehouse", "industrial", "機器人物流倉", {architecture:"industrial",color:"#8797a4",unlock:250,cost:5300,h:18,jobs:32,upkeep:4,uses:{road:1,power:16,water:4},tax:12,goods:16,pollution:1});
+  def("cold_storage", "industrial", "低溫冷鏈倉庫", {architecture:"industrial",color:"#9ac1cb",unlock:60,cost:1800,h:15,jobs:13,upkeep:2,uses:{road:1,power:9,water:2},tax:5,goods:10,pollution:0.5});
+  def("eco_factory", "industrial", "低碳循環工廠", {architecture:"industrial",color:"#6ea98a",unlock:250,cost:6400,h:20,jobs:42,upkeep:3,uses:{road:1,power:24,water:10},tax:15,goods:9,pollution:-4});
+  def("paper_mill", "industrial", "紙品製造廠", {architecture:"industrial",color:"#bca78c",unlock:60,cost:1550,h:15,jobs:17,upkeep:2,uses:{road:1,power:8,water:8},tax:5,goods:9,pollution:3});
+  def("beverage_brewery", "industrial", "飲品釀造廠", {architecture:"industrial",color:"#a8a05c",unlock:60,cost:1750,h:15,jobs:19,upkeep:2,uses:{road:1,power:7,water:8},tax:6,goods:10,pollution:1});
+  def("textile_mill", "industrial", "紡織設計工場", {architecture:"industrial",color:"#bb8d9c",unlock:60,cost:1350,h:13,jobs:18,upkeep:1.7,uses:{road:1,power:6,water:4},tax:5,goods:7,pollution:1.5});
+  def("shipyard", "industrial", "造船維修船塢", {architecture:"harbor",color:"#728b9b",unlock:800,cost:14500,h:24,jobs:60,upkeep:10,uses:{road:1,power:28,water:14},tax:25,goods:18,pollution:4,needs:"shore"});
+  def("aerospace_plant", "industrial", "航空航太製造中心", {architecture:"industrial",color:"#8798c4",unlock:2500,cost:38000,h:31,jobs:135,upkeep:24,uses:{road:1,power:95,water:32},tax:90,goods:18,pollution:2});
+  def("data_farm", "industrial", "雲端資料運算中心", {architecture:"glass",color:"#4c7da7",unlock:800,cost:16000,h:25,jobs:38,upkeep:12,uses:{road:1,power:130,water:20},tax:35,goods:2,pollution:1});
+  def("research_park", "industrial", "產業創新研究園", {architecture:"campus",color:"#72a8a3",unlock:800,cost:9800,h:18,jobs:48,upkeep:5,uses:{road:1,power:24,water:9},tax:26,goods:5,pollution:-1,happy:2});
+  def("cargo_depot", "industrial", "城市貨運轉運倉", {architecture:"industrial",color:"#b38d70",unlock:250,cost:4900,h:18,jobs:34,upkeep:4,uses:{road:1,power:12,water:4},tax:16,goods:17,pollution:2});
+  def("packaging_plant", "industrial", "智慧包裝工廠", {architecture:"industrial",color:"#baa784",unlock:250,cost:3750,h:17,jobs:28,upkeep:3,uses:{road:1,power:14,water:4},tax:11,goods:12,pollution:1});
+  def("cottage", "residential", "林間鄉村小屋", {architecture:"cottage",color:"#b7835d",unlock:0,cost:220,h:12,pop:7,tax:0.7,uses:{road:1,power:1,water:1},happy:1.2});
+  def("duplex", "residential", "雙拼住宅", {architecture:"villa",color:"#d0a07b",unlock:0,cost:360,h:14,pop:12,tax:1.1,uses:{road:1,power:2,water:2}});
+  def("row_house", "residential", "彩色連排住宅", {architecture:"townhouse",color:"#cf8c6e",unlock:0,cost:480,h:18,pop:18,tax:1.8,uses:{road:1,power:2,water:2}});
+  def("courtyard_homes", "residential", "中庭花園住宅", {architecture:"campus",color:"#c1a27b",unlock:60,cost:1100,h:20,pop:28,tax:2.8,uses:{road:1,power:3,water:3},happy:2.2});
+  def("eco_village", "residential", "綠意生態社區", {architecture:"green",color:"#78aa8a",unlock:250,cost:3600,h:28,pop:78,tax:7.2,uses:{road:1,power:5,water:5},happy:5,pollution:-1});
+  def("suburban_villa", "residential", "景觀獨棟別墅", {architecture:"villa",color:"#d4b493",unlock:60,cost:980,h:19,pop:25,tax:2.5,uses:{road:1,power:3,water:3},happy:2});
+  def("garden_apartment", "residential", "空中花園公寓", {architecture:"green",color:"#78aa93",unlock:250,cost:2400,h:34,pop:75,tax:7.8,uses:{road:1,power:8,water:6},happy:4,pollution:-0.5});
+  def("tower_block", "residential", "城市住宅塔樓", {architecture:"tower",color:"#a3b0bd",unlock:800,cost:5800,h:55,pop:145,tax:14,uses:{road:1,power:16,water:12}});
+  def("waterfront_condo", "residential", "海景精品公寓", {architecture:"glass",color:"#77a8bd",unlock:800,cost:7200,h:44,pop:115,tax:13,uses:{road:1,power:12,water:10},happy:4,needs:"shore"});
+  def("student_dorm", "residential", "大學學生宿舍", {architecture:"midrise",color:"#8ca3b9",unlock:250,cost:2200,h:31,pop:80,tax:4,uses:{road:1,power:7,water:6},happy:1});
+  def("senior_residence", "residential", "樂齡安養住宅", {architecture:"civic",color:"#d6bea3",unlock:250,cost:3100,h:24,pop:48,tax:5.2,uses:{road:1,power:6,water:5},happy:4});
+  def("co_living", "residential", "共享生活公寓", {architecture:"glass",color:"#8ab7b5",unlock:60,cost:1450,h:26,pop:52,tax:4.8,uses:{road:1,power:5,water:4},happy:2});
+  def("public_housing", "residential", "公共平價住宅", {architecture:"midrise",color:"#a4aab4",unlock:60,cost:850,h:25,pop:60,tax:3.2,uses:{road:1,power:5,water:4},happy:0.6});
+  def("hillside_home", "residential", "山坡景觀住宅", {architecture:"villa",color:"#b99b7d",unlock:60,cost:760,h:16,pop:19,tax:1.9,uses:{road:1,power:2,water:2},happy:2});
+  def("manor", "residential", "莊園大宅", {architecture:"civic",color:"#e0c9a3",unlock:800,cost:9200,h:38,pop:95,tax:16,uses:{road:1,power:10,water:8},happy:5});
+  def("tiny_home", "residential", "微型環保住宅", {architecture:"cottage",color:"#9abf93",unlock:0,cost:160,h:9,pop:5,tax:0.45,uses:{road:1,power:1,water:1},happy:1,pollution:-0.2});
+  def("farmhouse", "residential", "田園農舍", {architecture:"cottage",color:"#c59b6c",unlock:0,cost:290,h:13,pop:9,tax:0.8,uses:{road:1,power:1,water:1},happy:1.6});
+  def("loft_apartment", "residential", "工業風閣樓公寓", {architecture:"midrise",color:"#a99a91",unlock:250,cost:1950,h:30,pop:62,tax:6.6,uses:{road:1,power:7,water:5}});
+  def("micro_apartments", "residential", "微型套房大樓", {architecture:"tower",color:"#9ba9b6",unlock:250,cost:2800,h:38,pop:100,tax:7.8,uses:{road:1,power:9,water:6}});
+  def("luxury_penthouse", "residential", "頂層空中豪邸", {architecture:"tower",color:"#d2ba91",unlock:2500,cost:16500,h:72,pop:175,tax:32,uses:{road:1,power:25,water:18},happy:8});
+  def("cafe", "commercial", "街角精品咖啡館", {architecture:"market",color:"#c38e73",unlock:0,cost:180,h:10,jobs:4,upkeep:0.2,uses:{road:1,power:1,water:1},income:2.2,demand:12,happy:0.8});
+  def("bakery", "commercial", "社區麵包烘焙坊", {architecture:"market",color:"#d8b583",unlock:0,cost:280,h:11,jobs:5,upkeep:0.3,uses:{road:1,power:2,water:1},income:3,demand:16,happy:0.7});
+  def("restaurant", "commercial", "景觀餐廳", {architecture:"market",color:"#ba765e",unlock:60,cost:850,h:15,jobs:13,upkeep:1,uses:{road:1,power:4,water:3},income:8,demand:40,happy:1.4});
+  def("supermarket", "commercial", "大型超級市場", {architecture:"market",color:"#72a89b",unlock:60,cost:1450,h:16,jobs:22,upkeep:1.3,uses:{road:1,power:6,water:3},income:12,demand:75});
+  def("department_store", "commercial", "城市百貨公司", {architecture:"midrise",color:"#b48cb9",unlock:250,cost:6500,h:30,jobs:65,upkeep:5,uses:{road:1,power:24,water:10},income:30,demand:200,happy:2});
+  def("business_park", "commercial", "現代商務園區", {architecture:"campus",color:"#649ca8",unlock:250,cost:9200,h:26,jobs:95,upkeep:6,uses:{road:1,power:32,water:12},income:40,demand:160,pollution:0.4});
+  def("business_hotel", "commercial", "國際商務酒店", {architecture:"tower",color:"#8ea9bb",unlock:800,cost:8800,h:42,jobs:58,upkeep:7,uses:{road:1,power:16,water:15},income:36,demand:130,happy:2});
+  def("boutique_hotel", "commercial", "海灣精品旅館", {architecture:"villa",color:"#c89d82",unlock:250,cost:3200,h:24,jobs:24,upkeep:2.5,uses:{road:1,power:8,water:8},income:15,demand:65,happy:2,needs:"shore"});
+  def("convention_centre", "commercial", "國際會展中心", {architecture:"civic",color:"#8ba5b4",unlock:800,cost:16500,h:25,jobs:82,upkeep:9,uses:{road:1,power:38,water:14},income:52,demand:280,happy:2});
+  def("cinema", "commercial", "多廳電影院", {architecture:"midrise",color:"#c67d87",unlock:60,cost:1350,h:16,jobs:18,upkeep:1.4,uses:{road:1,power:8,water:3},income:9,demand:55,happy:1.5});
+  def("night_market", "commercial", "夜市美食街", {architecture:"market",color:"#d9a34b",unlock:0,cost:780,h:8,jobs:16,upkeep:0.7,uses:{road:1,power:3,water:2},income:7,demand:48,happy:2});
+  def("shopping_arcade", "commercial", "玻璃拱廊購物街", {architecture:"glass",color:"#7fb6b4",unlock:250,cost:3600,h:21,jobs:38,upkeep:3,uses:{road:1,power:12,water:6},income:19,demand:100,happy:2});
+  def("coworking_space", "commercial", "共享辦公空間", {architecture:"glass",color:"#8cabbc",unlock:60,cost:1800,h:20,jobs:25,upkeep:1.8,uses:{road:1,power:7,water:3},income:13,demand:45});
+  def("financial_tower", "commercial", "金融中心摩天大樓", {architecture:"tower",color:"#7488aa",unlock:2500,cost:32500,h:90,jobs:240,upkeep:24,uses:{road:1,power:85,water:36},income:160,demand:650});
+  def("tech_campus", "commercial", "科技企業總部園區", {architecture:"campus",color:"#5d9fae",unlock:800,cost:18500,h:38,jobs:155,upkeep:13,uses:{road:1,power:48,water:18},income:82,demand:270,pollution:-1});
+  def("art_mall", "commercial", "藝術設計購物中心", {architecture:"civic",color:"#c29aac",unlock:250,cost:5200,h:23,jobs:42,upkeep:4,uses:{road:1,power:18,water:9},income:24,demand:125,happy:4});
+  def("rooftop_market", "commercial", "空中花園市集", {architecture:"green",color:"#6cae8f",unlock:250,cost:3800,h:24,jobs:32,upkeep:2.6,uses:{road:1,power:10,water:8},income:18,demand:90,happy:3,pollution:-0.5});
+  def("game_arcade", "commercial", "電競遊樂中心", {architecture:"glass",color:"#7e8fd3",unlock:60,cost:2250,h:18,jobs:21,upkeep:1.8,uses:{road:1,power:12,water:3},income:15,demand:70,happy:2});
+  def("daycare", "service", "社區幼兒園", {architecture:"cottage",color:"#dda5a1",unlock:0,cost:380,h:11,jobs:8,upkeep:0.5,uses:{road:1,power:2,water:1},happy:2.5});
+  def("elementary_school", "service", "市立小學", {architecture:"civic",color:"#d2b373",unlock:60,cost:1250,h:18,jobs:18,upkeep:1.5,uses:{road:1,power:5,water:3},happy:4});
+  def("high_school", "service", "綜合高中", {architecture:"civic",color:"#94a9c4",unlock:250,cost:3600,h:23,jobs:34,upkeep:3.4,uses:{road:1,power:12,water:5},happy:5});
+  def("city_library", "service", "中央圖書館", {architecture:"civic",color:"#c2b79f",unlock:60,cost:1550,h:20,jobs:12,upkeep:1.2,uses:{road:1,power:4,water:2},happy:4.5});
+  def("community_center", "service", "市民活動中心", {architecture:"civic",color:"#b5ad9c",unlock:60,cost:1100,h:15,jobs:10,upkeep:0.8,uses:{road:1,power:3,water:2},happy:3});
+  def("fire_hq", "service", "消防總局", {architecture:"civic",color:"#c46c62",unlock:250,cost:2900,h:22,jobs:28,upkeep:3.2,uses:{road:1,power:9,water:5},happy:4});
+  def("police_hq", "service", "警政總部", {architecture:"civic",color:"#6c83af",unlock:250,cost:3400,h:27,jobs:32,upkeep:3.8,uses:{road:1,power:10,water:4},happy:4});
+  def("medical_center", "service", "區域醫療中心", {architecture:"civic",color:"#d2e0e3",unlock:250,cost:4600,h:28,jobs:48,upkeep:5,uses:{road:1,power:18,water:12},happy:7});
+  def("science_university", "service", "科技研究大學", {architecture:"campus",color:"#7fabbc",unlock:800,cost:13800,h:31,jobs:82,upkeep:9,uses:{road:1,power:30,water:12},happy:8});
+  def("heritage_museum", "service", "歷史文化博物館", {architecture:"civic",color:"#c4a98d",unlock:60,cost:1850,h:21,jobs:14,upkeep:1.5,uses:{road:1,power:5,water:2},happy:5});
+  def("concert_hall", "service", "城市音樂廳", {architecture:"dome",color:"#b2a0c8",unlock:250,cost:5400,h:27,jobs:35,upkeep:4.8,uses:{road:1,power:16,water:6},happy:8});
+  def("art_gallery", "service", "當代藝術美術館", {architecture:"civic",color:"#ddc5a4",unlock:250,cost:4250,h:19,jobs:22,upkeep:3,uses:{road:1,power:9,water:4},happy:6});
+  def("sports_center", "service", "全民綜合運動中心", {architecture:"stadium",color:"#83a9a1",unlock:250,cost:5200,h:17,jobs:28,upkeep:4,uses:{road:1,power:16,water:9},happy:7});
+  def("botanical_garden", "service", "國家植物園", {architecture:"plaza",color:"#8fbd8e",unlock:60,cost:1750,h:7,jobs:8,upkeep:0.8,uses:{road:1,power:1,water:5},happy:7,pollution:-2});
+  def("city_zoo", "service", "城市動物園", {architecture:"plaza",color:"#9cae74",unlock:800,cost:9800,h:12,jobs:48,upkeep:8,uses:{road:1,power:12,water:16},happy:9});
+  def("aquatic_center", "service", "水上運動中心", {architecture:"stadium",color:"#5fa4be",unlock:250,cost:4900,h:15,jobs:26,upkeep:5,uses:{road:1,power:15,water:20},happy:7});
+  def("observatory", "service", "山頂天文觀測台", {architecture:"spire",color:"#879ab7",unlock:800,cost:7700,h:32,jobs:14,upkeep:2.3,uses:{road:1,power:5,water:1},happy:5});
+  def("television_tower", "service", "城市電視廣播塔", {architecture:"spire",color:"#8c9eac",unlock:250,cost:6400,h:78,jobs:42,upkeep:4,uses:{road:1,power:20,water:2},income:8,happy:1});
+
   const needBits = d => Object.keys(d.uses || {}).reduce((m, k) => m | (NET_BIT[k] || 0), 0);
 
   // ── 城市等級：以「歷史最高人口」計算，人口掉下來也不會失去已解鎖的建築 ──
@@ -143,6 +246,17 @@
     { id: 'airport',  name: '空中門戶',   desc: '蓋出國際機場',      reward: 30000,  check: c => (c.built.airport || 0) >= 1 },
     { id: 'monument', name: '流芳百世',   desc: '蓋出勝利紀念碑',    reward: 200000, check: c => (c.built.monument || 0) >= 1 },
     { id: 'rich',     name: '百萬富翁',   desc: '資金達到 $1,000,000', reward: 50000, check: c => c.money >= 1e6 },
+
+    { id: 'greenDistrict', name: '綠色街區', desc: '建造 5 座低碳或綠化建築', reward: 8000, check: c => (c.built.eco_village||0)+(c.built.eco_factory||0)+(c.built.botanical_garden||0)+(c.built.rooftop_solar_farm||0)+(c.built.water_recycling_plant||0) >= 5 },
+    { id: 'transitHub', name: '四通八達', desc: '建造 3 座大型轉運設施', reward: 12000, check: c => (c.built.transit_interchange||0)+(c.built.metro_hub||0)+(c.built.train_station||0)+(c.built.city_airport_terminal||0) >= 3 },
+    { id: 'educationCity', name: '知識之城', desc: '建造 3 間教育設施', reward: 9000, check: c => (c.built.elementary_school||0)+(c.built.high_school||0)+(c.built.science_university||0)+(c.built.city_library||0) >= 3 },
+    { id: 'cultureDistrict', name: '藝文首都', desc: '建造 3 座藝文設施', reward: 10000, check: c => (c.built.concert_hall||0)+(c.built.art_gallery||0)+(c.built.heritage_museum||0)+(c.built.art_mall||0) >= 3 },
+    { id: 'skyline', name: '閃耀天際線', desc: '建造 5 座高層建築', reward: 25000, check: c => (c.built.financial_tower||0)+(c.built.luxury_penthouse||0)+(c.built.tower_block||0)+(c.built.television_tower||0)+(c.built.data_farm||0) >= 5 },
+    { id: 'waterMaster', name: '水資源大師', desc: '建造 3 座供水或水循環設施', reward: 8000, check: c => (c.built.desalination_plant||0)+(c.built.water_recycling_plant||0)+(c.built.rain_harvesting||0)+(c.built.sewage_plant||0) >= 3 },
+    { id: 'industryLeader', name: '產業領航者', desc: '建造 5 座現代工業設施', reward: 18000, check: c => (c.built.biotech_lab||0)+(c.built.ev_factory||0)+(c.built.chip_fab||0)+(c.built.aerospace_plant||0)+(c.built.data_farm||0) >= 5 },
+    { id: 'residentialMix', name: '宜居城市', desc: '建立 4 種不同住宅型態', reward: 6000, check: c => (c.built.cottage||0)+(c.built.eco_village||0)+(c.built.tower_block||0)+(c.built.student_dorm||0)+(c.built.waterfront_condo||0)+(c.built.public_housing||0) >= 4 },
+    { id: 'tourismBoom', name: '觀光熱點', desc: '建造 3 座休閒與旅遊設施', reward: 14000, check: c => (c.built.business_hotel||0)+(c.built.boutique_hotel||0)+(c.built.city_zoo||0)+(c.built.aquatic_center||0)+(c.built.convention_centre||0) >= 3 },
+    { id: 'cityCreator', name: '城市創造家', desc: '總建築數達到 500', reward: 90000, check: c => c.total >= 500 },
   ];
 
   // ── 全服隨機事件：每 8~16 分鐘一次，持續 90 秒，所有玩家同時受影響 ──
