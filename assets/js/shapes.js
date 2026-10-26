@@ -25,7 +25,7 @@ function makeKit(g, cx, cyb, v) {
   const poly = K.poly = (pts, fill, edge) => {
     g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath();
     g.fillStyle = fill; g.fill();
-    if (edge) { g.lineWidth = 1; g.strokeStyle = 'rgba(0,0,0,.22)'; g.stroke(); }
+    if (edge) { g.lineWidth = 0.75; g.strokeStyle = 'rgba(20,31,44,.16)'; g.stroke(); }
   };
   const grad = (x, r, col, a = 0.18, b = 0.45) => {
     const gr = g.createLinearGradient(x - r, 0, x + r, 0);
@@ -56,13 +56,22 @@ function makeKit(g, cx, cyb, v) {
     }
   };
 
-  K.windows = (u0, u1, w0, w1, z0, hh, o = {}) => {          // 兩個可見牆面上的窗戶（斜切變換後畫矩形）
+  K.windows = (u0, u1, w0, w1, z0, hh, o = {}) => {          // 有窗框、反光與明暗變化的玻璃立面
     const gx = o.gx || 8, gy = o.gy || 7, ww = o.ww || 4, wh = o.wh || 3, lit = o.lit || LIT;
     const faces = [[P(u0, w1, z0 + hh), (u1 - u0) * 32, 0.5], [P(u1, w1, z0 + hh), (w1 - w0) * 32, -0.5]];
     for (const [[x, y], wd, sk] of faces) {
       g.save(); g.transform(1, sk, 0, 1, x, y);
-      for (let yy = (o.top == null ? 4 : o.top) + v; yy < hh - (o.bot == null ? 3 : o.bot); yy += gy)
-        for (let xx = 4; xx < wd - 5; xx += gx) { g.fillStyle = (xx + yy * 3 + v) % 5 === 0 ? 'rgba(40,50,70,.5)' : lit; g.fillRect(xx, yy, ww, wh); }
+      for (let yy = (o.top == null ? 4 : o.top) + v; yy < hh - (o.bot == null ? 3 : o.bot); yy += gy) {
+        for (let xx = 4; xx < wd - 5; xx += gx) {
+          const pattern = Math.abs(Math.floor(xx / gx) + Math.floor(yy / gy) * 2 + v) % 6;
+          // 深色金屬窗框與內縮玻璃，避免原本亮色小方塊的塑膠感。
+          g.fillStyle = 'rgba(22,35,48,.72)'; g.fillRect(xx - .7, yy - .6, ww + 1.4, wh + 1.2);
+          g.fillStyle = pattern === 0 ? 'rgba(38,56,73,.96)' : (pattern === 1 ? 'rgba(255,211,129,.92)' : lit);
+          g.fillRect(xx, yy, ww, wh);
+          g.fillStyle = 'rgba(255,255,255,.42)'; g.fillRect(xx + .45, yy + .35, Math.max(.55, ww * .18), Math.max(.7, wh - .7));
+          g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(xx, yy + wh - .45, ww, .45);
+        }
+      }
       g.restore();
     }
   };
@@ -760,6 +769,78 @@ function genericArchitecture(K, d, h) {
     K.box(.32,.42,-.42,-.32,1.5,Math.max(3,top*.45),trim);
   } else {
     K.box(-.4,.4,-.34,.34,0,top,col,{win});
+  }
+
+  // 精修層：在基本體塊之外補上樓板、金屬收邊、陽台與屋頂設備，讓輪廓不再像簡單方盒。
+  if (arch === 'midrise') {
+    for (let z = 9; z < top - 2; z += 10) {
+      K.line(-.35,.314,z,.35,.314,z,'rgba(235,245,248,.48)',.7);
+      K.line(.374,-.29,z,.374,.29,z,'rgba(235,245,248,.34)',.7);
+    }
+    K.line(-.34,.314,2,-.34,.314,top-1,'rgba(238,246,248,.35)',.8);
+    K.line(.34,.314,2,.34,.314,top-1,'rgba(238,246,248,.35)',.8);
+    if (d.cat === 'residential') {
+      for (let z = 10; z < Math.min(top - 3, 43); z += 13) {
+        K.box(-.29,.29,.29,.385,z,1,'#718991');
+        K.line(-.28,.385,z+3,.28,.385,z+3,'#e4eeee',.8);
+        for (const u of [-.25,0,.25]) K.line(u,.385,z+1,u,.385,z+3,'#dbe7e9',.55);
+      }
+    } else {
+      K.box(-.13,.13,-.11,.11,top,Math.max(1.8,top*.055),dark);
+      K.box(-.08,.08,-.07,.07,top+Math.max(1.8,top*.055),Math.max(1.5,top*.035),trim);
+    }
+  } else if (arch === 'tower') {
+    for (let z = 10; z < Math.min(top * .47, 43); z += 13) {
+      if (d.cat === 'residential') {
+        K.box(-.30,.30,.30,.385,z,1,'#7b9298');
+        K.line(-.29,.385,z+3,.29,.385,z+3,'#e8f1ef',.8);
+        for (const u of [-.25,0,.25]) K.line(u,.385,z+1,u,.385,z+3,'#d7e5e6',.55);
+      } else {
+        K.line(-.35,.323,z,.35,.323,z,'rgba(242,248,249,.5)',.7);
+        K.line(.392,-.29,z,.392,.29,z,'rgba(242,248,249,.34)',.7);
+      }
+    }
+    K.box(-.13,.13,-.11,.11,top,Math.max(2,top*.045),trim);
+  } else if (arch === 'glass') {
+    for (const u of [-.27,-.09,.09,.27]) {
+      K.line(u,.302,2,u,.302,top-1,'rgba(235,249,255,.56)',.8);
+      K.line(.362,u,2,.362,u,top-1,'rgba(235,249,255,.36)',.75);
+    }
+    for (let z = 12; z < top - 2; z += 14) {
+      K.line(-.33,.302,z,.33,.302,z,'rgba(222,244,251,.38)',.65);
+      K.line(.362,-.27,z,.362,.27,z,'rgba(222,244,251,.3)',.65);
+    }
+    K.box(-.18,.18,-.15,.15,top,Math.max(2,top*.07),dark);
+    K.line(-.16,0,top+Math.max(2,top*.07),.16,0,top+Math.max(2,top*.07),'#d7edf2',.7);
+  } else if (arch === 'green') {
+    for (let z = 10; z < top - 2; z += 12) {
+      K.box(-.32,.32,.27,.355,z,1,'#6fae8a');
+      K.line(-.30,.355,z+2.8,.30,.355,z+2.8,'#d8f0df',.65);
+      K.tree(-.29,.32,z+1,1.8); K.tree(.29,.32,z+1,1.8);
+    }
+    K.box(-.37,.37,-.30,.30,top,1.6,'#7fbd8e');
+  } else if (arch === 'civic') {
+    for (const u of [-.34,.34]) K.line(u,.392,4,u,.392,Math.max(5,top*.67)+3,'rgba(249,244,229,.58)',1.1);
+    K.box(-.12,.12,.36,.43,1,Math.max(2,top*.12),'#8b6b56');
+  } else if (arch === 'market') {
+    const bh = Math.max(5,top*.58);
+    K.box(-.34,.34,.32,.415,bh*.43,1.1,'#d89c58',{top:'#f5cb83'});
+    for (const u of [-.30,-.10,.10,.30]) K.line(u,.415,bh*.43+1.1,u,.415,bh*.43+4,'#f5e6cb',.75);
+  } else if (arch === 'industrial') {
+    const bh = Math.max(7,top*.52);
+    K.line(-.40,.312,3,.19,.312,3,'rgba(228,237,239,.54)',.8);
+    K.line(-.40,.312,bh*.50,.19,.312,bh*.50,'rgba(228,237,239,.36)',.65);
+    K.box(-.10,.10,.31,.39,Math.max(3,bh*.22),Math.max(1.5,bh*.045),'#e3e8e9');
+  } else if (arch === 'dome') {
+    K.line(-.28,.342,4,.28,.342,4,'rgba(238,246,249,.42)',.65);
+    for (const u of [-.24,-.08,.08,.24]) K.line(u,.342,5,u,.342,top*.53,'rgba(235,246,249,.45)',.65);
+  } else if (arch === 'spire') {
+    K.line(-.18,.242,top*.24,.18,.242,top*.24,'rgba(236,245,248,.56)',.8);
+    K.dot(0,0,top+Math.max(6,top*.15),1.2,'#f7c96d');
+  } else if (arch === 'cottage' || arch === 'villa' || arch === 'townhouse') {
+    // 屋頂與門窗加一圈暖色收邊，近景時能看出木作或石材層次。
+    K.line(-.31,.272,2,.31,.272,2,'rgba(255,246,224,.6)',.65);
+    K.dot(.16,.285,Math.max(4,top*.22),1.05,'#f4d38d');
   }
 }
 function hashId(value) {
