@@ -402,14 +402,27 @@ const QUESTS = [
   { text: '擴張到 2 塊領地', done: () => G.getStats().chunks >= 2 },
   { text: '與鄰居結盟', done: () => { const me = G.getMe(); return !!me && [...links].some(l => l.split('|').includes(me.id)); } },
   { text: '人口達到 100', done: () => G.getStats().pop >= 100 },
+  { text: '綠色街區：建造 5 座綠化或低碳設施', done: c => c.green >= 5 },
+  { text: '城市服務：建造 3 座公共服務設施', done: c => c.service >= 3 },
+  { text: '產業生態：擁有 3 座工業設施及 5 間商業建築', done: c => c.industrial >= 3 && c.commercial >= 5 },
+  { text: '藝文生活：建造一座音樂廳、美術館或博物館', done: c => c.culture >= 1 },
+  { text: '天際線：建造 3 座高層建築', done: c => c.highrise >= 3 },
+  { text: '完善城市水電：擁有 3 座供電與 2 座供水設施', done: c => c.power >= 3 && c.water >= 2 },
+  { text: '交通樞紐：建造一座大型轉運設施', done: c => c.transit >= 1 },
+  { text: '打造區域中心：人口達到 1,000', done: () => G.getStats().pop >= 1000 },
 ];
 function updateQuests() {
   const me = G.getMe(); if (!me) return;
-  const cnt = { residential: 0, commercial: 0, power: 0 };
+  const cnt = { residential: 0, commercial: 0, industrial: 0, service: 0, power: 0, water: 0, green: 0, culture: 0, highrise: 0, transit: 0 };
   for (const ch of G.chunks.values()) if (ch.owner === me.id) for (const t of ch.tiles.values()) {
     const d = B[t.type]; if (!d) continue;
     if (cnt[d.cat] != null) cnt[d.cat]++;
     if (d.supplies && d.supplies.power) cnt.power++;
+    if (d.supplies && d.supplies.water) cnt.water++;
+    if ((d.pollution || 0) < 0 || ['park','tree_grove','flower_plaza','botanical_garden','eco_village','garden_apartment','rooftop_market'].includes(t.type)) cnt.green++;
+    if (['concert_hall','art_gallery','heritage_museum','museum','art_mall'].includes(t.type)) cnt.culture++;
+    if ((d.h || 0) >= 55 || d.architecture === 'tower') cnt.highrise++;
+    if (['transit_interchange','metro_hub','train_station','city_airport_terminal','bus_station','bus_terminal'].includes(t.type)) cnt.transit++;
   }
   const list = $('questList'); list.innerHTML = '';
   let next = true, all = true;
