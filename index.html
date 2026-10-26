@@ -81,6 +81,34 @@
     <p class="ghPagesHint">詳細步驟請看專案中的 <code>README-GITHUB-TW.md</code>。</p>
   </section>
 </div>
+<div id="cityOnboardingChoice" hidden aria-hidden="true">
+  <section class="city-onboarding-card" role="dialog" aria-modal="true" aria-labelledby="cityOnboardingTitle">
+    <div class="city-onboarding-kicker">WELCOME TO YOUR CITY</div>
+    <h2 id="cityOnboardingTitle">你想怎麼開始？</h2>
+    <p>如果你是第一次玩城市建設遊戲，我會用高亮框一步一步帶你操作；熟悉玩法的話，可以直接進城。</p>
+    <div class="city-onboarding-options">
+      <button id="cityOnboardingBeginner" type="button" class="primary">🌱 我是新手，開始引導<small>從道路、住宅到水電，逐步學會建設。</small></button>
+      <button id="cityOnboardingExperienced" type="button">🏙️ 我已經會玩，直接開始<small>跳過教學，直接管理自己的城市。</small></button>
+    </div>
+  </section>
+</div>
+<div id="cityTutorial" hidden aria-hidden="true">
+  <div id="cityTourMaskTop" class="city-tour-mask"></div>
+  <div id="cityTourMaskBottom" class="city-tour-mask"></div>
+  <div id="cityTourMaskLeft" class="city-tour-mask"></div>
+  <div id="cityTourMaskRight" class="city-tour-mask"></div>
+  <div id="cityTourMapMarker" hidden aria-hidden="true"><span>🖱️ 點這裡的空地</span></div>
+  <section id="cityTourCard" role="dialog" aria-modal="true" aria-labelledby="cityTourTitle">
+    <div id="cityTourCounter"></div>
+    <h2 id="cityTourTitle">歡迎來到你的城市！</h2>
+    <p id="cityTourText"></p>
+    <div class="city-tour-actions">
+      <button id="cityTourSkipStep" type="button" hidden>略過此步</button>
+      <button id="cityTourNext" type="button" class="primary">下一步</button>
+    </div>
+    <button id="cityTourExit" type="button">跳過整個教學</button>
+  </section>
+</div>
 <script src="assets/js/config.js"></script>
 <script>
 (function () {
@@ -225,6 +253,382 @@
     setAll: function (hidden) { setAll(!!hidden, true); },
     setPanel: function (name, collapsed) { setPanel(name, !!collapsed, true); }
   };
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var choiceScreen = $('cityOnboardingChoice');
+  var tourScreen = $('cityTutorial');
+  var tourCard = $('cityTourCard');
+  var mapMarker = $('cityTourMapMarker');
+  var mask = {
+    top: $('cityTourMaskTop'),
+    bottom: $('cityTourMaskBottom'),
+    left: $('cityTourMaskLeft'),
+    right: $('cityTourMaskRight')
+  };
+  var currentUsername = '';
+  var pendingChoiceUsername = '';
+  var pendingTourUsername = '';
+  var gameReadyUsername = '';
+  var tourIndex = 0;
+  var tourActive = false;
+  var currentTarget = null;
+
+  function safeGet(key) { try { return localStorage.getItem(key) || ''; } catch (_) { return ''; } }
+  function safeSet(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+  function safeRemove(key) { try { localStorage.removeItem(key); } catch (_) {} }
+  function normalized(name) { return String(name || '').trim().toLowerCase(); }
+  function choiceKey(name) { return 'citymmo.tutorial.choice.' + normalized(name); }
+  function doneKey(name) { return 'citymmo.tutorial.done.' + normalized(name); }
+  function sameUser(a, b) { return !!a && !!b && normalized(a) === normalized(b); }
+
+  var steps = [
+    {
+      title: '歡迎來到你的城市！',
+      text: '這個引導會帶你完成第一輪基本建設。每一步都會把要按的位置高亮，其他畫面會變暗。你也可以隨時跳過教學。',
+      action: 'next'
+    },
+    {
+      title: '先認識城市狀態列',
+      text: '這裡能看到資金、人口、幸福度、領地、電力和供水。建築要花錢，居民也需要道路與基本服務。',
+      selector: '#hud',
+      action: 'next'
+    },
+    {
+      title: '任務與城市顧問',
+      text: '這裡會列出城市的下一個目標，顧問也會提供建設提示。遇到不知道下一步做什麼時，可以回來看這裡。',
+      selector: '#quests',
+      action: 'next'
+    },
+    {
+      title: '第一步：選擇道路分類',
+      text: '在下方建築選單點「交通」。接著我們會先鋪一小段道路，讓住宅有路可接。',
+      selector: '#tabs button[data-k="transport"]',
+      action: 'click'
+    },
+    {
+      title: '選擇柏油道路',
+      text: '點選「柏油道路」讓它成為目前的建造工具。選取後，再到地圖上放置。',
+      selector: '#items button[data-id="road"]',
+      action: 'click'
+    },
+    {
+      title: '在地圖放置道路',
+      text: '請在高亮區域內，選擇自己領地裡一格空地點一下。放置成功後會自動進入下一步；如果放錯位置或地形不合，請再選別格。',
+      map: true,
+      action: 'place',
+      type: 'road'
+    },
+    {
+      title: '第二步：選擇住宅分類',
+      text: '點選「住宅」，我們來放置第一間房子。',
+      selector: '#tabs button[data-k="residential"]',
+      action: 'click'
+    },
+    {
+      title: '選擇郊區平房',
+      text: '點選「郊區平房」。它是入門住宅，成本較低，適合用來開始增加人口。',
+      selector: '#items button[data-id="bungalow"]',
+      action: 'click'
+    },
+    {
+      title: '把第一間住宅放在道路旁',
+      text: '在高亮的地圖區域找一格空地，最好緊鄰剛才的道路，再點一下放置住宅。',
+      map: true,
+      action: 'place',
+      type: 'bungalow'
+    },
+    {
+      title: '第三步：打開能源水利',
+      text: '住宅除了要緊鄰道路，也需要水和電。先打開「能源水利」分類。',
+      selector: '#tabs button[data-k="utility"]',
+      action: 'click'
+    },
+    {
+      title: '先建造水井',
+      text: '點選「水井」，它會為城市提供基本供水。',
+      selector: '#items button[data-id="well"]',
+      action: 'click'
+    },
+    {
+      title: '放置水井',
+      text: '在自己的領地裡找一格空地放置水井。放置成功後就會繼續。',
+      map: true,
+      action: 'place',
+      type: 'well'
+    },
+    {
+      title: '再選擇太陽能板',
+      text: '太陽能板能提供電力。點選它作為接下來的建造工具。',
+      selector: '#items button[data-id="solar"]',
+      action: 'click'
+    },
+    {
+      title: '放置太陽能板',
+      text: '在自己的領地裡找一格空地放置太陽能板。之後可以繼續按任務目標建造更多住宅、商店和公共服務。',
+      map: true,
+      action: 'place',
+      type: 'solar'
+    },
+    {
+      title: '你已經學會基本建設了！',
+      text: '恭喜！記住：住宅要緊鄰道路，也需要水和電。接下來可以依照「新手目標」擴大城市。你可以自由探索其他建築、公共運輸、城市外觀和多人結盟功能。',
+      selector: '#quests',
+      action: 'finish'
+    }
+  ];
+
+  function setPane(el, left, top, width, height) {
+    el.style.left = Math.max(0, left) + 'px';
+    el.style.top = Math.max(0, top) + 'px';
+    el.style.width = Math.max(0, width) + 'px';
+    el.style.height = Math.max(0, height) + 'px';
+  }
+
+  function getTargetRect(step) {
+    if (step.map) {
+      var w = window.innerWidth, h = window.innerHeight;
+      var left = Math.round(w * (w <= 600 ? 0.06 : 0.1));
+      var top = Math.round(h * 0.27);
+      var width = Math.round(w * (w <= 600 ? 0.88 : 0.76));
+      var height = Math.round(h * (w <= 600 ? 0.36 : 0.38));
+      return { left: left, top: top, right: left + width, bottom: top + height, width: width, height: height, map: true };
+    }
+    if (!step.selector) return null;
+    var el = document.querySelector(step.selector);
+    if (!el) return null;
+    currentTarget = el;
+    el.classList.add('city-tour-target');
+    var r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    var pad = 8;
+    var left2 = Math.max(0, r.left - pad);
+    var top2 = Math.max(0, r.top - pad);
+    var right2 = Math.min(window.innerWidth, r.right + pad);
+    var bottom2 = Math.min(window.innerHeight, r.bottom + pad);
+    return { left: left2, top: top2, right: right2, bottom: bottom2, width: right2 - left2, height: bottom2 - top2, element: el };
+  }
+
+  function showMask(rect) {
+    var w = window.innerWidth, h = window.innerHeight;
+    if (!rect) {
+      setPane(mask.top, 0, 0, w, h);
+      setPane(mask.bottom, 0, 0, 0, 0);
+      setPane(mask.left, 0, 0, 0, 0);
+      setPane(mask.right, 0, 0, 0, 0);
+      mapMarker.hidden = true;
+      return;
+    }
+    var l = Math.max(0, rect.left), t = Math.max(0, rect.top);
+    var r = Math.min(w, rect.right), b = Math.min(h, rect.bottom);
+    setPane(mask.top, 0, 0, w, t);
+    setPane(mask.bottom, 0, b, w, h - b);
+    setPane(mask.left, 0, t, l, b - t);
+    setPane(mask.right, r, t, w - r, b - t);
+    if (rect.map) {
+      mapMarker.hidden = false;
+      setPane(mapMarker, l, t, r - l, b - t);
+    } else {
+      mapMarker.hidden = true;
+    }
+  }
+
+  function positionCard(rect, step) {
+    var cw = tourCard.offsetWidth || 390;
+    var ch = tourCard.offsetHeight || 220;
+    var left = Math.max(12, Math.min(window.innerWidth - cw - 12, (window.innerWidth - cw) / 2));
+    var top;
+    if (!rect) {
+      top = (window.innerHeight - ch) / 2;
+    } else if (rect.map) {
+      var belowMap = rect.bottom + 12;
+      var aboveMap = rect.top - ch - 12;
+      if (belowMap + ch <= window.innerHeight - 12) top = belowMap;
+      else if (aboveMap >= 12) top = aboveMap;
+      else top = Math.max(12, window.innerHeight - ch - 12);
+    } else {
+      var below = rect.bottom + 12;
+      var above = rect.top - ch - 12;
+      if (below + ch <= window.innerHeight - 12) top = below;
+      else if (above >= 12) top = above;
+      else top = Math.max(12, Math.min(window.innerHeight - ch - 12, (window.innerHeight - ch) / 2));
+      left = Math.max(12, Math.min(window.innerWidth - cw - 12, rect.left + rect.width / 2 - cw / 2));
+    }
+    tourCard.style.left = left + 'px';
+    tourCard.style.top = Math.max(12, Math.min(window.innerHeight - ch - 12, top)) + 'px';
+  }
+
+  function openImportantPanels() {
+    if (window.CityUIFolds) {
+      window.CityUIFolds.setAll(false);
+      window.CityUIFolds.setPanel('hud', false);
+      window.CityUIFolds.setPanel('quests', false);
+    }
+    var palette = $('palette');
+    var paletteToggle = $('paletteCollapseToggle');
+    if (palette && palette.classList.contains('palette-collapsed') && paletteToggle) paletteToggle.click();
+  }
+
+  function drawStep() {
+    if (!tourActive) return;
+    if (currentTarget) currentTarget.classList.remove('city-tour-target');
+    currentTarget = null;
+    var step = steps[tourIndex];
+    $('cityTourCounter').textContent = '新手教學  ' + (tourIndex + 1) + ' / ' + steps.length;
+    $('cityTourTitle').textContent = step.title;
+    $('cityTourText').textContent = step.text;
+    var next = $('cityTourNext');
+    var skipStep = $('cityTourSkipStep');
+    if (step.action === 'click') {
+      next.textContent = '等待你點選高亮按鈕…';
+      next.disabled = true;
+      skipStep.hidden = false;
+    } else if (step.action === 'place') {
+      next.textContent = '放置成功後會自動繼續';
+      next.disabled = true;
+      skipStep.hidden = false;
+    } else {
+      next.textContent = step.action === 'finish' ? '完成教學' : '下一步';
+      next.disabled = false;
+      skipStep.hidden = true;
+    }
+    var rect = getTargetRect(step);
+    showMask(rect);
+    positionCard(rect, step);
+  }
+
+  function startTutorial(username) {
+    currentUsername = username || safeGet('cm_auth_name');
+    if (!currentUsername || !sameUser(currentUsername, gameReadyUsername)) {
+      pendingTourUsername = currentUsername;
+      return;
+    }
+    if (safeGet(doneKey(currentUsername)) === '1') return;
+    pendingTourUsername = '';
+    openImportantPanels();
+    tourIndex = 0;
+    tourActive = true;
+    tourScreen.hidden = false;
+    tourScreen.setAttribute('aria-hidden', 'false');
+    drawStep();
+  }
+
+  function closeTutorial(markDone) {
+    if (markDone && currentUsername) safeSet(doneKey(currentUsername), '1');
+    tourActive = false;
+    if (currentTarget) currentTarget.classList.remove('city-tour-target');
+    currentTarget = null;
+    tourScreen.hidden = true;
+    tourScreen.setAttribute('aria-hidden', 'true');
+    mapMarker.hidden = true;
+  }
+
+  function advanceStep() {
+    if (!tourActive) return;
+    if (tourIndex >= steps.length - 1 || steps[tourIndex].action === 'finish') {
+      closeTutorial(true);
+      return;
+    }
+    tourIndex += 1;
+    drawStep();
+  }
+
+  function showChoice(username) {
+    if (!username || safeGet(choiceKey(username))) return;
+    pendingChoiceUsername = username;
+    choiceScreen.hidden = false;
+    choiceScreen.setAttribute('aria-hidden', 'false');
+    $('cityOnboardingBeginner').focus();
+  }
+
+  $('cityOnboardingBeginner').addEventListener('click', function () {
+    var username = pendingChoiceUsername || safeGet('cm_auth_name');
+    if (!username) return;
+    safeSet(choiceKey(username), 'beginner');
+    safeRemove('citymmo.tutorial.pendingChoice');
+    choiceScreen.hidden = true;
+    choiceScreen.setAttribute('aria-hidden', 'true');
+    pendingChoiceUsername = '';
+    pendingTourUsername = username;
+    if (sameUser(username, gameReadyUsername)) startTutorial(username);
+  });
+
+  $('cityOnboardingExperienced').addEventListener('click', function () {
+    var username = pendingChoiceUsername || safeGet('cm_auth_name');
+    if (username) {
+      safeSet(choiceKey(username), 'experienced');
+      safeSet(doneKey(username), '1');
+    }
+    safeRemove('citymmo.tutorial.pendingChoice');
+    pendingChoiceUsername = '';
+    choiceScreen.hidden = true;
+    choiceScreen.setAttribute('aria-hidden', 'true');
+  });
+
+  $('cityTourNext').addEventListener('click', function () {
+    if (!tourActive) return;
+    var step = steps[tourIndex];
+    if (step.action === 'click' || step.action === 'place') return;
+    advanceStep();
+  });
+  $('cityTourSkipStep').addEventListener('click', advanceStep);
+  $('cityTourExit').addEventListener('click', function () { closeTutorial(true); });
+
+  document.addEventListener('click', function (event) {
+    if (!tourActive) return;
+    var step = steps[tourIndex];
+    if (step.action !== 'click' || !step.selector) return;
+    var hit = event.target && event.target.closest ? event.target.closest(step.selector) : null;
+    if (!hit) return;
+    var idx = tourIndex;
+    window.setTimeout(function () {
+      if (tourActive && tourIndex === idx) advanceStep();
+    }, 0);
+  });
+
+  window.addEventListener('citymmo:auth-registered', function (event) {
+    var username = event.detail && event.detail.username || safeGet('cm_auth_name');
+    if (!username) return;
+    if (safeGet(choiceKey(username))) return;
+    safeSet('citymmo.tutorial.pendingChoice', username);
+    showChoice(username);
+  });
+
+  window.addEventListener('citymmo:game-ready', function (event) {
+    gameReadyUsername = event.detail && event.detail.username || safeGet('cm_auth_name');
+    var pending = pendingTourUsername;
+    if (pending && sameUser(pending, gameReadyUsername)) {
+      startTutorial(pending);
+      return;
+    }
+    var savedUser = safeGet('cm_auth_name');
+    var savedChoice = savedUser && safeGet(choiceKey(savedUser));
+    if (savedChoice === 'beginner' && safeGet(doneKey(savedUser)) !== '1') startTutorial(savedUser);
+  });
+
+  window.addEventListener('citymmo:building-placed', function (event) {
+    if (!tourActive) return;
+    var step = steps[tourIndex];
+    var placed = event.detail || {};
+    if (step.action === 'place' && placed.type === step.type) {
+      window.setTimeout(advanceStep, 250);
+    }
+  });
+
+  window.addEventListener('resize', function () {
+    if (tourActive) drawStep();
+  });
+
+  var savedUser = safeGet('cm_auth_name');
+  var pendingChoice = safeGet('citymmo.tutorial.pendingChoice');
+  if (savedUser && pendingChoice && sameUser(savedUser, pendingChoice) && !safeGet(choiceKey(savedUser))) {
+    window.setTimeout(function () { showChoice(savedUser); }, 0);
+  } else if (savedUser && safeGet(choiceKey(savedUser)) === 'beginner' && safeGet(doneKey(savedUser)) !== '1') {
+    pendingTourUsername = savedUser;
+  }
 })();
 </script>
 </body>
