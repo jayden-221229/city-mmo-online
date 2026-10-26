@@ -14,12 +14,12 @@ assert.deepStrictEqual(ClientG.GAME_MODES, G.GAME_MODES, 'browser and server gam
 // segment rendered by its line definition. This catches blank/generic new-building art.
 const shapeSource = fs.readFileSync(path.join(__dirname, '../assets/js/shapes.js'), 'utf8');
 const shapeSections = [
-  shapeSource.match(/const SHAPES = \{([\\s\\S]*?)\\n\};/),
-  shapeSource.match(/const SIGNATURE_SHAPES = \{([\\s\\S]*?)\\n\};/)
+  shapeSource.match(/const SHAPES = \{([\s\S]*?)\n\};/),
+  shapeSource.match(/const SIGNATURE_SHAPES = \{([\s\S]*?)\n\};/)
 ].filter(Boolean).map(m => m[1]);
 const knownSprites = new Set();
 for (const section of shapeSections) {
-  for (const match of section.matchAll(/^\\s{2}([A-Za-z_$][\\w$]*)(?:\\s*:\\s*\\([^)]*\\)\\s*=>|\\s*\\([^)]*\\)\\s*\\{)/gm)) {
+  for (const match of section.matchAll(/^\s{2}([A-Za-z_$][\w$]*)(?:\s*:\s*\([^)]*\)\s*=>|\s*\([^)]*\)\s*\{)/gm)) {
     knownSprites.add(match[1]);
   }
 }
@@ -27,6 +27,7 @@ for (const [id, def] of Object.entries(G.BUILDINGS)) {
   assert(def.line || knownSprites.has(id), 'building needs a dedicated sprite or line rendering: ' + id);
 }
 assert.strictEqual(Object.keys(G.BUILDINGS).length, 169, 'expected 169 catalog entries including the 100 expanded buildings');
+
 assert(G.BUILDINGS.bus_stop && G.BUILDINGS.bus_stop.cat === 'transport', 'early-game bus stop is available in the transport category');
 
 for (const id of ['beach_resort','aquarium','museum','medical_campus','research_center','wind_farm','robot_factory','quantum_lab','orbital_port','sky_garden']) {
