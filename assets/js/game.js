@@ -173,7 +173,10 @@ async function authRequest(mode) {
     token = data.token; myName = data.username; authReady = true;
     store.set('cm_auth_token', token); store.set('cm_auth_name', myName);
     authScreen.style.display = 'none';
-    if (mode === 'register') window.dispatchEvent(new CustomEvent('citymmo:auth-registered', { detail: { username: myName } }));
+    if (mode === 'register') {
+      store.set('citymmo.tutorial.pendingChoice', myName);
+      window.dispatchEvent(new CustomEvent('citymmo:auth-registered', { detail: { username: myName } }));
+    }
     if (socket.connected) connectGame();
   } catch (e) { setAuthError(e.message || '無法連線，請稍後再試。'); }
   finally { $('loginBtn').disabled = $('registerBtn').disabled = false; }
