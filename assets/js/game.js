@@ -1270,6 +1270,36 @@ function drawDayNight(solid) {
   }
 }
 
+// Soft atmospheric perspective: restrained blue-grey haze, drifting fog banks and a warm horizon glow.
+function drawAtmosphericHaze() {
+  ctx.save();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.globalCompositeOperation = 'screen';
+  const fogBoost = worldEvent && worldEvent.id === 'smog' ? 1.55 : worldEvent && worldEvent.id === 'rain' ? 1.22 : 1;
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, 'rgba(192,218,230,' + (0.105 * fogBoost) + ')');
+  sky.addColorStop(0.30, 'rgba(177,211,224,' + (0.065 * fogBoost) + ')');
+  sky.addColorStop(0.62, 'rgba(174,207,218,' + (0.025 * fogBoost) + ')');
+  sky.addColorStop(1, 'rgba(174,207,218,0)');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  const drift = nowMs * 0.004;
+  for (let i = 0; i < 4; i++) {
+    const x = ((W * (0.12 + i * 0.27) + Math.sin(drift * 0.017 + i * 1.7) * W * 0.045 + drift * (i % 2 ? -0.18 : 0.12)) % (W * 1.3)) - W * 0.15;
+    const y = H * (0.16 + (i % 3) * 0.13) + Math.sin(drift * 0.011 + i) * H * 0.018;
+    const radius = Math.max(70, W * (0.22 + (i % 2) * 0.07));
+    const mist = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    mist.addColorStop(0, 'rgba(211,231,236,' + (0.035 * fogBoost) + ')');
+    mist.addColorStop(0.55, 'rgba(186,215,226,' + (0.018 * fogBoost) + ')');
+    mist.addColorStop(1, 'rgba(186,215,226,0)');
+    ctx.fillStyle = mist; ctx.fillRect(x - radius, y - radius * 0.43, radius * 2, radius * 0.86);
+  }
+  const glow = ctx.createRadialGradient(W * 0.74, H * 0.44, 2, W * 0.74, H * 0.44, Math.max(120, W * 0.37));
+  glow.addColorStop(0, 'rgba(255,205,148,0.028)');
+  glow.addColorStop(1, 'rgba(255,205,148,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
 // ───────────── 批量框選的預覽 ─────────────
 function drawSelection() {
   if (!sel || !me) return;
@@ -1336,6 +1366,7 @@ function draw(dt) {
   for (const s of solid) (s.car ? drawCar(s) : s.ped ? drawPedestrian(s) : s.tree ? drawTree(s) : blit(s));
   drawSelection();
   drawDayNight(solid);
+  drawAtmosphericHaze();
   drawLabels(); drawPops();
 
   if (hover && me) {                                                         // 滑鼠高亮
@@ -1500,20 +1531,36 @@ addEventListener('keydown', e => {
 
 // ───────────────── UI：工具列 / 通知 / 外交面板 ─────────────────
 const tabs = $('tabs'), items = $('items');
+const buildingSearch = $('buildingSearch'), buildingCount = $('buildingCount');
+let buildingSearchTerm = '';
 let curTab = 'transport';
+function paletteDefsForTab(k) {
+  return k === 'tools'
+    ? [{ id: 'claim', name: '擴張領地', tool: { kind: 'claim' } }, { id: 'diplo', name: '結盟（合併）', tool: { kind: 'diplo' } }, { id: 'unlink', name: '解除結盟', tool: { kind: 'unlink' } }, { id: 'gift', name: '贈送資金', tool: { kind: 'gift' } }, { id: 'bulldoze', name: '拆除', tool: { kind: 'bulldoze' } }]
+    : Object.values(B).filter(d => k === 'newbuildings' ? d.group === 'newbuildings' : k === 'decorations' ? d.group === 'decoration' : !d.group && d.cat === k).map(d => ({ id: d.id, name: d.name, cost: d.cost, d, tool: { kind: 'build', type: d.id } }));
+}
+if (buildingSearch) buildingSearch.addEventListener('input', () => {
+  buildingSearchTerm = String(buildingSearch.value || '').trim().toLocaleLowerCase();
+  showTab(curTab);
+});
 function buildPalette() {
   tabs.innerHTML = ''; let tabNo = 0;
   for (const [k, label] of Object.entries({ ...CATS, newbuildings: '新建築', decorations: '城市裝飾', tools: '領地 / 外交' })) {
-    const b = document.createElement('button'); b.textContent = (++tabNo) + ' ' + label; b.dataset.k = k; b.onclick = () => showTab(k); tabs.appendChild(b);
+    const count = paletteDefsForTab(k).length;
+    const b = document.createElement('button'); b.textContent = (++tabNo) + ' ' + label + ' · ' + count; b.title = label + '，共 ' + count + ' 項'; b.dataset.k = k; b.onclick = () => showTab(k); tabs.appendChild(b);
   }
   showTab(curTab);
 }
 function showTab(k) {
   curTab = k; [...tabs.children].forEach(b => b.classList.toggle('on', b.dataset.k === k));
   items.innerHTML = '';
-  const defs = k === 'tools'
-    ? [{ id: 'claim', name: '擴張領地', tool: { kind: 'claim' } }, { id: 'diplo', name: '結盟（合併）', tool: { kind: 'diplo' } }, { id: 'unlink', name: '解除結盟', tool: { kind: 'unlink' } }, { id: 'gift', name: '贈送資金', tool: { kind: 'gift' } }, { id: 'bulldoze', name: '拆除', tool: { kind: 'bulldoze' } }]
-    : Object.values(B).filter(d => k === 'newbuildings' ? d.group === 'newbuildings' : k === 'decorations' ? d.group === 'decoration' : !d.group && d.cat === k).map(d => ({ id: d.id, name: d.name, cost: d.cost, d, tool: { kind: 'build', type: d.id } }));
+  const allDefs = paletteDefsForTab(k);
+  const defs = buildingSearchTerm ? allDefs.filter(it => (it.name + ' ' + it.id).toLocaleLowerCase().includes(buildingSearchTerm)) : allDefs;
+  if (buildingCount) buildingCount.textContent = buildingSearchTerm ? '找到 ' + defs.length + ' / ' + allDefs.length + ' 項' : '共 ' + allDefs.length + ' 項';
+  if (!defs.length) {
+    const empty = document.createElement('div'); empty.className = 'catalog-empty'; empty.textContent = '找不到符合的建築，試試別的名稱。'; items.appendChild(empty);
+    markPoor(); return;
+  }
   for (const it of defs) {
     const b = document.createElement('button'); b.className = 'item'; b.dataset.id = it.id;
     const locked = !!it.d && (it.d.unlock || 0) > (stats.peakPop || 0);                   // 城市等級不夠 → 鎖定
