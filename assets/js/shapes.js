@@ -611,11 +611,168 @@ const SHAPES = {
   },
 };
 
+// Fallback architecture styles keep newly added buildings visually distinct even without bespoke sprite art.
+function genericArchitecture(K, d, h) {
+  const col = d.color || '#91a5b3';
+  const trim = tint(col, 0.18), dark = tint(col, -0.24);
+  const win = { gx: 8, gy: 7, ww: 3.5, wh: 3.2, lit: 'rgba(255,231,167,.9)' };
+  const top = Math.max(8, Math.min(h, 100));
+  const arch = d.architecture || ({
+    residential: ['cottage','villa','townhouse','midrise','tower','green'][Math.abs(hashId(d.id)) % 6],
+    commercial: ['market','midrise','glass','tower','civic'][Math.abs(hashId(d.id)) % 5],
+    industrial: ['industrial','utility','market'][Math.abs(hashId(d.id)) % 3],
+    utility: ['utility','solar','industrial'][Math.abs(hashId(d.id)) % 3],
+    service: ['civic','campus','dome','plaza'][Math.abs(hashId(d.id)) % 4],
+    transport: ['market','glass','harbor'][Math.abs(hashId(d.id)) % 3]
+  }[d.cat] || 'midrise');
+  if (arch === 'cottage') {
+    const bh = Math.max(6, top * .58);
+    K.box(-.34,.30,-.27,.27,0,bh,tint(col,.12),{win:{gx:10,gy:8,top:2,bot:2}});
+    K.gable(-.39,.35,-.31,.31,bh,Math.max(5,top*.42),col,'u');
+    K.box(-.08,.10,.27,.42,0,Math.max(2,bh*.42),dark);
+    K.decalL(-.23,-.10,.27,2,Math.max(5,bh*.58),'#8ec5d9');
+    K.tree(-.40,.34,0,6);
+  } else if (arch === 'villa') {
+    const bh = Math.max(7,top*.58);
+    K.box(-.38,.16,-.31,.30,0,bh,tint(col,.12),{win:{gx:9,gy:7,top:2}});
+    K.gable(-.42,.20,-.35,.34,bh,Math.max(5,top*.25),dark,'u');
+    K.box(.10,.40,-.20,.20,0,bh*.72,tint(col,.23),{win:{gx:8,gy:8,top:2}});
+    K.gable(.07,.43,-.23,.23,bh*.72,Math.max(4,top*.22),col,'w');
+    K.box(-.02,.12,.30,.42,0,bh*.5,'#8b6c55');
+    K.tree(-.42,.34,0,6); K.tree(.39,-.35,0,5);
+  } else if (arch === 'townhouse') {
+    const bh = Math.max(8,top*.55);
+    K.box(-.43,.43,-.30,.30,0,bh,tint(col,.12),{win:{gx:7,gy:7,ww:3,wh:4}});
+    for(let i=0;i<4;i++){
+      const u=-.32+i*.21;
+      K.gable(u,u+.20,-.35,.35,bh,Math.max(4,top*.32),i%2?trim:col,'u');
+      K.decalL(u+.045,u+.13,.30,1,Math.max(4,bh*.42),i%2?'#d4e4e8':'#6c4b3f');
+    }
+  } else if (arch === 'midrise') {
+    K.box(-.37,.37,-.31,.31,0,top,col,{win});
+    K.box(-.42,.42,-.35,.35,top-2,2,trim);
+    K.box(-.28,.28,-.24,.24,top,Math.max(2,top*.08),dark);
+    for(let z=6;z<top-4;z+=10){
+      K.flat([[-.40,-.32],[.40,-.32],[.40,-.27],[-.40,-.27]],z,trim);
+      K.flat([[-.40,.27],[.40,.27],[.40,.32],[-.40,.32]],z,trim);
+    }
+  } else if (arch === 'tower') {
+    const a=Math.max(8,top*.48), b=Math.max(6,top*.31), c=Math.max(4,top-a-b);
+    K.box(-.39,.39,-.32,.32,0,a,col,{win});
+    K.box(-.30,.30,-.25,.25,a,b,tint(col,.12),{win:{gx:7,gy:6,ww:3,wh:3,lit:win.lit}});
+    K.box(-.20,.20,-.18,.18,a+b,c,tint(col,.2),{win:{gx:6,gy:6,ww:3,wh:3,lit:win.lit}});
+    K.box(-.24,.24,-.22,.22,top-2,2,trim);
+    K.line(0,0,top,0,0,top+Math.max(6,top*.18),dark,1.5);
+    K.dot(0,0,top+Math.max(6,top*.18),2.2,'#ffd98a');
+  } else if (arch === 'glass') {
+    K.box(-.36,.36,-.30,.30,0,top,col,{win:{gx:6.5,gy:6,ww:3.5,wh:4,lit:'rgba(193,236,255,.92)'}});
+    K.box(-.40,.40,-.34,.34,top-2,2,trim);
+    for(let u=-.30;u<=.31;u+=.15) K.line(u,-.30,1,u,-.30,top-1,'rgba(230,247,255,.7)',.7);
+    K.box(-.22,.22,-.20,.20,top,Math.max(2,top*.09),dark);
+    K.line(.25,-.08,top,.25,-.08,top+7,'#e7edf0',1);
+  } else if (arch === 'civic') {
+    K.box(-.44,.44,-.39,.39,0,4,'#c8c1b1');
+    K.box(-.37,.37,-.31,.31,4,Math.max(7,top*.67),tint(col,.12),{win:{gx:10,gy:9,ww:3,wh:4}});
+    for(const u of [-.27,-.09,.09,.27]) K.box(u-.025,u+.025,.31,.35,4,Math.max(7,top*.67),'#eee7d6');
+    K.box(-.44,.44,-.39,.39,top*.67+4,3,trim);
+    K.gable(-.41,.41,-.36,.36,top*.67+7,Math.max(4,top*.22),dark,'u');
+    K.box(-.09,.09,.34,.43,0,Math.max(5,top*.28),'#a87960');
+  } else if (arch === 'market') {
+    const bh=Math.max(5,top*.58);
+    K.box(-.42,.42,-.34,.34,0,bh,tint(col,.14),{win:{gx:10,gy:8,top:Math.max(2,bh*.2),lit:'rgba(255,229,166,.92)'}});
+    K.box(-.46,.46,-.38,.38,bh-1,2.3,trim);
+    for(let i=0;i<7;i++) K.decalL(-.40+i*.115,-.30+i*.115,.34,bh*.38,bh*.38+3.5,i%2? '#f8eee0':col);
+    K.box(-.12,.12,.34,.41,0,bh*.75,dark);
+    K.box(-.05,.25,-.42,-.34,bh*.56,bh*.06,'#f5d68e');
+  } else if (arch === 'industrial') {
+    const bh=Math.max(7,top*.52);
+    K.box(-.43,.22,-.34,.31,0,bh,col,{win:{gx:10,gy:8,ww:3,wh:3}});
+    K.gable(-.46,.25,-.37,.34,bh,Math.max(4,top*.25),dark,'u');
+    K.box(.25,.43,-.25,.28,0,Math.max(4,bh*.8),trim);
+    for(let i=0;i<3;i++) K.box(-.35+i*.20,-.23+i*.20,.31,.35,1,Math.max(4,bh*.36),'#d5dce0');
+    K.cyl(.33,-.22,3.5,bh*.8,Math.max(4,top*.24),dark,{top:trim});
+  } else if (arch === 'utility') {
+    K.box(-.38,.08,-.31,.27,0,Math.max(8,top*.67),col,{win:{gx:11,gy:8,ww:3,wh:3}});
+    K.box(-.42,.12,-.35,.31,top*.67,2.4,trim);
+    K.cyl(.24,-.20,8,0,Math.max(8,top*.58),trim,{bands:[col,tint(col,.15)]});
+    K.cyl(.24,.20,6,0,Math.max(6,top*.43),col,{top:trim});
+    K.line(-.25,.25,4,-.05,.25,4,'#d8e3e7',2);
+    K.dot(.10,.25,6,2.5,'#f1cb7b');
+  } else if (arch === 'campus') {
+    K.flat([[-.47,-.43],[.45,-.44],[.47,.42],[-.44,.46]],0,'#c7d0c6');
+    K.box(-.40,-.06,-.30,.24,0,Math.max(7,top*.65),col,{win:{gx:8,gy:8}});
+    K.box(.00,.36,-.27,.24,0,Math.max(9,top*.82),trim,{win:{gx:8,gy:7}});
+    K.box(-.08,.18,.20,.39,0,Math.max(6,top*.45),tint(col,.18),{win:{gx:7,gy:7}});
+    K.flat([[-.09,.18],[.17,.18],[.17,.29],[-.09,.29]],1,'#e9dfca');
+    K.tree(-.39,.36,0,5); K.tree(.39,.34,0,5);
+  } else if (arch === 'dome') {
+    K.box(-.40,.40,-.34,.34,0,Math.max(8,top*.56),col,{win:{gx:10,gy:8}});
+    K.box(-.45,.45,-.39,.39,top*.56,3,trim);
+    K.dome(0,0,14,top*.56,shade(col,.23));
+    K.box(-.12,.12,.34,.42,0,Math.max(4,top*.24),dark);
+    K.dot(0,0,top*.56+10,2,'#f4d9a3');
+  } else if (arch === 'stadium') {
+    K.flat([[-.48,-.44],[.48,-.44],[.48,.44],[-.48,.44]],0,'#b8c4bd');
+    K.ell(0,0,2,17,trim,'rgba(255,255,255,.35)');
+    K.ell(0,0,4,13,'#354d58','#d9e0dd');
+    K.ell(0,0,6,10,col,'rgba(255,255,255,.45)');
+    K.ell(0,0,8,6,'#6cbd8d','rgba(235,246,233,.65)');
+    K.box(-.40,-.18,.22,.37,0,Math.max(4,top*.34),trim);
+    K.box(.18,.40,.22,.37,0,Math.max(4,top*.34),col);
+    K.dot(0,0,10,2,'#f7e2a0');
+  } else if (arch === 'plaza') {
+    K.flat([[-.48,-.44],[.48,-.44],[.48,.44],[-.48,.44]],0,'#c7d5c2');
+    K.flat([[-.06,-.46],[.06,-.46],[.06,.46],[-.06,.46]],.4,'#e5dfd2');
+    K.flat([[-.46,-.06],[.46,-.06],[.46,.06],[-.46,.06]],.4,'#e5dfd2');
+    K.cyl(0,0,9,0,2,'#8ab9c6'); K.ell(0,0,3,9,'#79c6d0','#eaf8ed');
+    K.line(0,0,3,0,0,Math.max(6,top*.7),'#e7f7f8',1.5);
+    for(const [u,w] of [[-.32,-.28],[.32,-.28],[-.32,.28],[.32,.28]]) K.tree(u,w,0,5);
+  } else if (arch === 'spire') {
+    K.box(-.28,.28,-.24,.24,0,Math.max(6,top*.24),trim);
+    K.box(-.20,.20,-.18,.18,top*.24,Math.max(8,top*.45),col,{win:{gx:7,gy:8,ww:3,wh:3}});
+    K.box(-.14,.14,-.13,.13,top*.69,Math.max(5,top*.15),dark);
+    K.cone(0,0,7,top*.84,Math.max(8,top*.18),trim);
+    K.line(0,0,top,0,0,top+Math.max(6,top*.15),'#dbe7ed',1.2);
+    K.dot(0,0,top+Math.max(6,top*.15),2,'#ffd166');
+  } else if (arch === 'harbor') {
+    K.flat([[-.48,-.44],[.48,-.44],[.48,.44],[-.48,.44]],0,'#b8c5c9');
+    K.box(-.42,.03,-.34,-.02,0,Math.max(8,top*.58),'#d4dfe4',{win});
+    K.box(.08,.40,-.34,.26,0,Math.max(5,top*.36),trim);
+    K.line(-.12,.23,4,-.12,.23,top+8,'#d6a35c',2);
+    K.line(-.12,.23,top+8,.37,.23,top+8,'#d6a35c',2);
+    K.line(.27,.23,top+8,.27,.23,Math.max(5,top*.3),'#5b6871',1.5);
+    K.box(.22,.32,.18,.28,Math.max(5,top*.3),4,'#db6e5e');
+  } else if (arch === 'green') {
+    K.box(-.35,.35,-.29,.29,0,top,col,{win:{gx:7,gy:7,lit:'rgba(255,237,174,.9)'}});
+    for(let z=8;z<top;z+=12){
+      K.flat([[-.39,-.32],[.39,-.32],[.39,-.26],[-.39,-.26]],z,'#55a87b');
+      K.flat([[-.39,.26],[.39,.26],[.39,.32],[-.39,.32]],z+2,'#7acb9b');
+    }
+    K.flat([[-.35,-.29],[.35,-.29],[.35,.29],[-.35,.29]],top,'#8dcf9b');
+    K.tree(-.40,.35,0,5); K.tree(.40,.32,0,5);
+  } else if (arch === 'solar') {
+    K.box(-.44,.44,-.44,.44,0,1.5,'#a9b3bc');
+    for(const [u,w] of [[-.23,-.23],[.23,-.23],[-.23,.23],[.23,.23]]){
+      const pts=[[u-.17,w-.17,4],[u+.17,w-.17,4],[u+.17,w+.17,2],[u-.17,w+.17,2]].map(p=>K.P(...p));
+      K.poly(pts,'#244b7a','rgba(230,242,255,.5)');
+      K.g.strokeStyle='rgba(202,231,255,.6)';K.g.lineWidth=.7;K.g.beginPath();K.g.moveTo(...pts[0]);K.g.lineTo(...pts[2]);K.g.moveTo(...pts[1]);K.g.lineTo(...pts[3]);K.g.stroke();
+    }
+    K.box(.32,.42,-.42,-.32,1.5,Math.max(3,top*.45),trim);
+  } else {
+    K.box(-.4,.4,-.34,.34,0,top,col,{win});
+  }
+}
+function hashId(value) {
+  let h=2166136261;
+  for(const ch of String(value||'')) { h ^= ch.charCodeAt(0); h=Math.imul(h,16777619); }
+  return h|0;
+}
+
 const scratch = document.createElement('canvas'); scratch.width = TW; scratch.height = 400;   // 先量出最高點的測量用畫布
 function makeBlock(d, v) {
   const tall = (d.cat === 'residential' || d.cat === 'commercial') && d.h >= 14;
   const h = tall ? Math.round(d.h * [0.92, 1, 1.12][v]) : d.h;
-  const shape = SHAPES[d.id] || SHAPES._box;
+  const shape = SHAPES[d.id] || genericArchitecture;
   const probe = makeKit(scratch.getContext('2d'), TW / 2, 300, v);
   shape(probe, d, h);
   const top = Math.ceil(probe.maxZ);
