@@ -173,6 +173,7 @@ async function authRequest(mode) {
     token = data.token; myName = data.username; authReady = true;
     store.set('cm_auth_token', token); store.set('cm_auth_name', myName);
     authScreen.style.display = 'none';
+    if (mode === 'register') window.dispatchEvent(new CustomEvent('citymmo:auth-registered', { detail: { username: myName } }));
     if (socket.connected) connectGame();
   } catch (e) { setAuthError(e.message || '無法連線，請稍後再試。'); }
   finally { $('loginBtn').disabled = $('registerBtn').disabled = false; }
@@ -207,6 +208,7 @@ function connectGame() {
     }
     cam.x = isoX(res.home.cx * C + C / 2, res.home.cy * C + C / 2);
     cam.y = isoY(res.home.cx * C + C / 2, res.home.cy * C + C / 2);
+    window.dispatchEvent(new CustomEvent('citymmo:game-ready', { detail: { username: myName } }));
   });
 }
 socket.on('connect', () => {
@@ -1387,7 +1389,7 @@ function act(x, y) {
   if (!tool) { const t = getTile(x, y); if (t) showInfo(t); else hideInfo(); return; }
   if (tool.kind === 'build') {
     const type = tool.type;
-    socket.emit('build', { x, y, type }, r => { cb(r); if (r && r.ok) { const mc = GAME_MODES[(stats && stats.mode) || 'classic'] || GAME_MODES.classic; const paid = Math.ceil((B[type].cost + TR.clearFee(B[type], x, y)) * mc.buildMultiplier); sfx('build'); pops.push({ x: x + 0.5, y: y + 0.5, text: paid ? '-$' + paid : '$0 建造', color: paid ? '#ffb4a8' : '#9ef3e4', t0: nowMs }); } });
+    socket.emit('build', { x, y, type }, r => { cb(r); if (r && r.ok) { window.dispatchEvent(new CustomEvent('citymmo:building-placed', { detail: { type, x, y } })); const mc = GAME_MODES[(stats && stats.mode) || 'classic'] || GAME_MODES.classic; const paid = Math.ceil((B[type].cost + TR.clearFee(B[type], x, y)) * mc.buildMultiplier); sfx('build'); pops.push({ x: x + 0.5, y: y + 0.5, text: paid ? '-$' + paid : '$0 建造', color: paid ? '#ffb4a8' : '#9ef3e4', t0: nowMs }); } });
   }
   else if (tool.kind === 'bulldoze') {
     const t = getTile(x, y);
