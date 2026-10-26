@@ -1537,7 +1537,9 @@ let curTab = 'transport';
 function paletteDefsForTab(k) {
   return k === 'tools'
     ? [{ id: 'claim', name: '擴張領地', tool: { kind: 'claim' } }, { id: 'diplo', name: '結盟（合併）', tool: { kind: 'diplo' } }, { id: 'unlink', name: '解除結盟', tool: { kind: 'unlink' } }, { id: 'gift', name: '贈送資金', tool: { kind: 'gift' } }, { id: 'bulldoze', name: '拆除', tool: { kind: 'bulldoze' } }]
-    : Object.values(B).filter(d => k === 'newbuildings' ? d.group === 'newbuildings' : k === 'decorations' ? d.group === 'decoration' : !d.group && d.cat === k).map(d => ({ id: d.id, name: d.name, cost: d.cost, d, tool: { kind: 'build', type: d.id } }));
+    : Object.values(B).filter(d => k === 'newbuildings' ? d.group === 'newbuildings' : k === 'decorations' ? d.group === 'decoration' : !d.group && d.cat === k)
+      .map((d, order) => ({ id: d.id, name: d.name, cost: d.cost, d, order, tool: { kind: 'build', type: d.id } }))
+      .sort((a, b) => (a.cost ?? 0) - (b.cost ?? 0) || a.order - b.order); // 先按造價由低到高，入門建築永遠排前面
 }
 if (buildingSearch) buildingSearch.addEventListener('input', () => {
   buildingSearchTerm = String(buildingSearch.value || '').trim().toLocaleLowerCase();
