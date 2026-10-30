@@ -97,7 +97,7 @@
     classic: { id: 'classic', name: '經典模式', buildMultiplier: 1, claimMultiplier: 1, incomeMultiplier: 1, upkeepMultiplier: 1, refundMultiplier: 0.5,
       description: '原本的平衡：正常建造費、領地費、收入與維護費。' },
     creative: { id: 'creative', name: '創意模式', buildMultiplier: 0, claimMultiplier: 0, incomeMultiplier: 1, upkeepMultiplier: 0, refundMultiplier: 0,
-      description: '建造與擴張免費，免維護費，適合自由規劃城市。' },
+      description: '所有建築與領地免費、免維護費且不受人口解鎖限制，適合自由規劃城市。' },
     challenge: { id: 'challenge', name: '挑戰模式', buildMultiplier: 1.25, claimMultiplier: 1.5, incomeMultiplier: 1.1, upkeepMultiplier: 1.15, refundMultiplier: 0.3,
       description: '建造費 +25%、領地費 ×1.5、維護費 +15%，收入也提高 10%。' },
   };
