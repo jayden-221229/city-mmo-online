@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Seamless City MMO</title>
-<link rel="stylesheet" href="assets/css/style.css?v=city-architecture-v5">
+<link rel="stylesheet" href="assets/css/style.css?v=city-expansion-v1">
 </head>
 <body>
 <div id="authScreen"><form id="authCard"><h1>Seamless City MMO</h1><p>使用帳號名稱與密碼登入，或建立新帳號。</p><label for="authUsername">帳號名稱</label><input id="authUsername" minlength="3" maxlength="16" autocomplete="username" pattern="[A-Za-z0-9_-]{3,16}" required placeholder="3–16 個英文字母、數字、_ 或 -"><label for="authPassword">密碼</label><input id="authPassword" type="password" minlength="8" maxlength="128" autocomplete="current-password" required placeholder="至少 8 個字元"><div id="authActions"><button class="primary" id="loginBtn" type="submit">登入</button><button id="registerBtn" type="button">建立帳號</button></div><div id="authError" role="status"></div></form></div>
@@ -135,13 +135,13 @@
   }
   var files = [
     (server || '') + socketPath + '/socket.io.js',
-    'assets/shared/buildings.js?v=city-architecture-v5',
-    'assets/shared/terrain.js?v=city-architecture-v5',
-    'assets/js/shapes.js?v=city-architecture-v5',
-    'assets/js/transit-network.js?v=city-architecture-v5',
-    'assets/js/traffic-physics.js?v=city-architecture-v5',
-    'assets/js/game.js?v=city-architecture-v5',
-    'assets/js/ui.js?v=city-architecture-v5'
+    'assets/shared/buildings.js?v=city-expansion-v1',
+    'assets/shared/terrain.js?v=city-expansion-v1',
+    'assets/js/shapes.js?v=city-expansion-v1',
+    'assets/js/transit-network.js?v=city-expansion-v1',
+    'assets/js/traffic-physics.js?v=city-expansion-v1',
+    'assets/js/game.js?v=city-expansion-v1',
+    'assets/js/ui.js?v=city-expansion-v1'
   ];
   function loadAt(index) {
     if (index >= files.length) return;
