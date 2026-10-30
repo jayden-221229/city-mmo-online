@@ -1565,7 +1565,7 @@ function showTab(k) {
   }
   for (const it of defs) {
     const b = document.createElement('button'); b.className = 'item'; b.dataset.id = it.id;
-    const locked = !!it.d && (it.d.unlock || 0) > (stats.peakPop || 0);                   // 城市等級不夠 → 鎖定
+    const locked = !!it.d && (stats.mode || 'classic') !== 'creative' && (it.d.unlock || 0) > (stats.peakPop || 0); // 創意模式不鎖建築
     const modeCfg = GAME_MODES[(stats && stats.mode) || 'classic'] || GAME_MODES.classic;
     const visibleCost = it.cost != null ? Math.ceil(it.cost * modeCfg.buildMultiplier) : null;
     if (locked) b.classList.add('locked'); else if (visibleCost != null) b.dataset.cost = visibleCost;
