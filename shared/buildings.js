@@ -270,6 +270,24 @@
     { id: 'smog',     icon: '🌫️', name: '霧霾警報',   desc: '污染的負面影響 ×1.5',           good: false, duration: 90000 },
   ];
 
+  // ── V11 自由城市擴充：觀光、文化、產業鏈與地標 ──
+  def("chinatown_gate", "service", "唐人街牌樓", {architecture:"civic",color:"#c83e35",unlock:60,cost:2200,h:23,jobs:8,upkeep:0.6,uses:{road:1},happy:4,income:1.5});
+  def("neon_market", "commercial", "霓虹夜市街區", {architecture:"market",color:"#b64de0",unlock:60,cost:3100,h:19,jobs:26,upkeep:1.2,uses:{road:1,power:8,water:3},tax:12,income:3,happy:3});
+  def("waterfront_promenade", "service", "海濱觀景步道", {architecture:"campus",color:"#4aa9bd",unlock:60,cost:1800,h:8,jobs:6,upkeep:0.3,happy:4,income:0.8,needs:"shore"});
+  def("botanical_dome", "service", "玻璃植物園穹頂", {architecture:"dome",color:"#5eaf7d",unlock:250,cost:6800,h:27,jobs:22,upkeep:2.5,uses:{road:1,power:8,water:12},happy:7,pollution:-2});
+  def("convention_centre", "commercial", "國際會展中心", {architecture:"glass",color:"#6b9fc9",unlock:800,cost:17500,h:28,jobs:72,upkeep:9,uses:{road:1,power:28,water:12},income:22,tax:28,happy:3});
+  def("film_studio", "industrial", "影視製作園區", {architecture:"campus",color:"#a879b8",unlock:250,cost:6100,h:20,jobs:38,upkeep:4,uses:{road:1,power:18,water:4},tax:18,income:5,happy:1});
+  def("marina", "commercial", "遊艇碼頭", {architecture:"harbor",color:"#4d9fb7",unlock:250,cost:7200,h:18,jobs:28,upkeep:4,uses:{road:1,power:7,water:4},income:14,happy:4,needs:"shore"});
+  def("food_market", "commercial", "城市美食廣場", {architecture:"market",color:"#d8a14e",unlock:0,cost:850,h:13,jobs:14,upkeep:0.5,uses:{road:1,power:3,water:3},tax:4,income:1.5,happy:2});
+  def("urban_farm", "industrial", "垂直都市農場", {architecture:"green",color:"#69a96b",unlock:60,cost:2450,h:25,jobs:20,upkeep:1.4,uses:{road:1,power:7,water:8},goods:12,tax:5,pollution:-1,happy:2});
+  def("sorting_centre", "industrial", "智慧資源分類中心", {architecture:"industrial",color:"#719a8b",unlock:250,cost:5400,h:18,jobs:30,upkeep:3,uses:{road:1,power:14,water:3},goods:8,tax:10,pollution:-3});
+  def("logistics_hub", "industrial", "多式聯運物流樞紐", {architecture:"industrial",color:"#b18a65",unlock:800,cost:12800,h:24,jobs:64,upkeep:7,uses:{road:1,power:22,water:5},goods:22,tax:24,income:7,pollution:2});
+  def("data_exchange", "commercial", "城市數據交易中心", {architecture:"glass",color:"#4f88cb",unlock:2500,cost:26500,h:34,jobs:95,upkeep:17,uses:{road:1,power:65,water:10},tax:58,income:18,pollution:0.8});
+  def("science_museum", "service", "科學探索博物館", {architecture:"dome",color:"#e1a65a",unlock:250,cost:5300,h:22,jobs:20,upkeep:2,uses:{road:1,power:7,water:3},happy:4,tax:5,income:2});
+  def("grand_arena", "service", "城市巨蛋競技場", {architecture:"dome",color:"#c46f6f",unlock:800,cost:19800,h:31,jobs:65,upkeep:11,uses:{road:1,power:30,water:14},happy:8,income:15,tax:20});
+  def("world_wonder", "service", "全服合作奇觀", {architecture:"spire",color:"#d6b45b",unlock:2500,cost:85000,h:48,jobs:40,upkeep:18,uses:{road:1,power:22,water:8},happy:12,income:25,tax:20,pollution:-1});
+  def("eco_transit_hub", "transport", "綠能交通樞紐", {architecture:"green",color:"#48a995",unlock:800,cost:11200,h:23,jobs:42,upkeep:5,uses:{road:1,power:18,water:5},happy:5,pollution:-1.5});
+
   return { CHUNK, NET_BIT, CATS, BUILDINGS, def, variant, needBits, LEVELS, levelIndex, ACHIEVEMENTS, EVENTS, GAME_MODES,
     CLAIM_BASE: 1500, START_MONEY: 5000, BASE_SUPPLY: { power: 30, water: 30 } };   // BASE_SUPPLY：每位玩家免費的基礎水電額度
 });
