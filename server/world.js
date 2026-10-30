@@ -178,7 +178,7 @@ class World {
   build(pid, x, y, type) {
     const p = this.players.get(pid), d = BUILDINGS[type];
     if (!p || !d || !Number.isInteger(x) || !Number.isInteger(y)) return { err: 'bad_request' };
-    if ((p.peakPop || 0) < (d.unlock || 0)) return { err: 'locked', need: d.unlock };     // 城市等級不夠，尚未解鎖
+    if (p.mode !== 'creative' && (p.peakPop || 0) < (d.unlock || 0)) return { err: 'locked', need: d.unlock }; // 創意模式可自由使用所有建築
     const ch = this.chunkAt(x, y);
     if (!ch || ch.owner !== pid) return { err: 'not_owned' };
     const i = mod(y) * CHUNK + mod(x);
