@@ -26,7 +26,7 @@ for (const section of shapeSections) {
 for (const [id, def] of Object.entries(G.BUILDINGS)) {
   assert(def.line || knownSprites.has(id), 'building needs a dedicated sprite or line rendering: ' + id);
 }
-assert.strictEqual(Object.keys(G.BUILDINGS).length, 169, 'expected 169 catalog entries including the 100 expanded buildings');
+assert.strictEqual(Object.keys(G.BUILDINGS).length, 185, 'expected 185 catalog entries including the 116 expanded buildings');
 
 assert(G.BUILDINGS.bus_stop && G.BUILDINGS.bus_stop.cat === 'transport', 'early-game bus stop is available in the transport category');
 
