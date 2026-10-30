@@ -30,6 +30,14 @@ assert.strictEqual(Object.keys(G.BUILDINGS).length, 169, 'expected 169 catalog e
 
 assert(G.BUILDINGS.bus_stop && G.BUILDINGS.bus_stop.cat === 'transport', 'early-game bus stop is available in the transport category');
 
+// New city-expansion buildings must have real coloured sprite art and economy rules.
+for (const id of ["chinatown_gate","neon_market","waterfront_promenade","botanical_dome","convention_centre","film_studio","marina","food_market","urban_farm","sorting_centre","logistics_hub","data_exchange","science_museum","grand_arena","world_wonder","eco_transit_hub"]) {
+  assert(G.BUILDINGS[id], 'city expansion building exists: ' + id);
+  assert(/^#[0-9a-f]{6}$/i.test(G.BUILDINGS[id].color), 'building has a real colour: ' + id);
+  assert(knownSprites.has(id), 'building has bespoke non-placeholder sprite art: ' + id);
+}
+
+
 for (const id of ['beach_resort','aquarium','museum','medical_campus','research_center','wind_farm','robot_factory','quantum_lab','orbital_port','sky_garden']) {
   assert(G.BUILDINGS[id], 'new building exists: ' + id);
   assert.strictEqual(G.BUILDINGS[id].group, 'newbuildings', 'new-building group: ' + id);
