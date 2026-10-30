@@ -167,29 +167,46 @@ async function authRequest(mode) {
   try {
     const apiBase = String(window.GAME_SERVER || '').replace(/\/+$/, '');
     const apiPrefix = String(window.GAME_API_PREFIX == null ? '' : window.GAME_API_PREFIX).replace(/\/+$/, '');
-    const response = await fetch(apiBase + apiPrefix + '/api/auth/' + mode, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
-    const data = await response.json();
+    const controller = new AbortController();
+    const authTimeout = setTimeout(() => controller.abort(), 12000);
+    let response;
+    try {
+      response = await fetch(apiBase + apiPrefix + '/api/auth/' + mode, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }), signal: controller.signal });
+    } finally { clearTimeout(authTimeout); }
+    let data;
+    try { data = await response.json(); } catch (_) { throw new Error('伺服器回應格式錯誤，請稍後重試。'); }
     if (!response.ok) throw new Error(data.error || '驗證失敗');
     token = data.token; myName = data.username; authReady = true;
     store.set('cm_auth_token', token); store.set('cm_auth_name', myName);
-    authScreen.style.display = 'none';
+    setAuthError('帳號驗證成功，正在連接城市…');
+    if (socket.connected) connectGame();
     if (mode === 'register') {
       store.set('citymmo.tutorial.pendingChoice', myName);
       window.dispatchEvent(new CustomEvent('citymmo:auth-registered', { detail: { username: myName } }));
     }
     if (socket.connected) connectGame();
-  } catch (e) { setAuthError(e.message || '無法連線，請稍後再試。'); }
+  } catch (e) { setAuthError(e.name === 'AbortError' ? '登入伺服器回應逾時，請稍後再試。' : (e.message || '無法連線，請稍後再試。')); }
   finally { $('loginBtn').disabled = $('registerBtn').disabled = false; }
 }
 $('authCard').addEventListener('submit', e => { e.preventDefault(); authRequest('login'); });
 $('registerBtn').addEventListener('click', () => authRequest('register'));
 const socketOptions = { path: String(window.GAME_SOCKET_PATH || '/api/socket-io/socket.io'), transports: ['websocket'], reconnection: true, reconnectionAttempts: Infinity, reconnectionDelay: 800, reconnectionDelayMax: 10000 };
 const socket = window.GAME_SERVER ? io(window.GAME_SERVER, socketOptions) : io(undefined, socketOptions);
+let helloAckTimer = null;
 function connectGame() {
   if (!authReady || !token) return;
+  if (helloAckTimer) clearTimeout(helloAckTimer);
   $('net').style.display = 'none';
+  setAuthError('正在連接城市…');
   chunks.clear(); lastVp = ''; transitDirty = true;
+  helloAckTimer = setTimeout(() => {
+    helloAckTimer = null;
+    authScreen.style.display = 'flex';
+    setAuthError('帳號已驗證，但城市伺服器沒有回應。請稍後按登入重試；你的城市資料不會被清除。');
+  }, 12000);
   socket.emit('hello', { token, name: myName }, res => {
+    if (helloAckTimer) clearTimeout(helloAckTimer);
+    helloAckTimer = null;
     if (!res || !res.you) {
       // 舊／失效的本機 token 不應把玩家卡在隱藏登入畫面的狀態。
       token = null; myName = ''; authReady = false; me = null;
@@ -198,6 +215,8 @@ function connectGame() {
       setAuthError('登入狀態已失效，請重新登入。');
       return;
     }
+    authScreen.style.display = 'none';
+    setAuthError('');
     me = res.you; players.set(me.id, me); transitStationOptionSignature = '';
     links.clear(); res.links.forEach(l => links.add(l));
     socket.emit('transit:list', {}, r => {
