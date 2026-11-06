@@ -73,7 +73,6 @@
   def('fab',           'industrial', '高科技晶圓廠', { unlock: 2500, jobs: 80, cost: 15000, h: 18, color: '#8f5fd0', uses: { road: 1, power: 80, water: 40 }, tax: 55, goods: 20, pollution: 6 });
   def('datacenter',    'industrial', '資料中心',     { unlock: 2500, jobs: 40, cost: 18000, h: 18, color: '#3a86ff', uses: { road: 1, power: 100, water: 30 }, tax: 70, pollution: 3 });
   // ── 新內容：觀光、教育醫療、未來科技（group 讓 UI 可以獨立成一個「新建築」分頁）──
-  def('beach_resort', 'commercial', '海濱度假村', { group: 'newbuildings', unlock: 250, cost: 6200, upkeep: 5, jobs: 38, h: 34, color: '#2a9d8f', needs: 'shore', uses: { road: 1, power: 12, water: 10 }, income: 22, demand: 90, happy: 5 });
   def('aquarium', 'service', '海洋水族館', { group: 'newbuildings', unlock: 250, cost: 7800, upkeep: 6, jobs: 32, h: 32, color: '#4ea8de', uses: { road: 1, power: 18, water: 14 }, income: 8, demand: 70, happy: 6 });
   def('museum', 'service', '城市博物館', { group: 'newbuildings', unlock: 60, cost: 2200, upkeep: 2, jobs: 12, h: 24, color: '#cbb994', uses: { road: 1, power: 4, water: 2 }, happy: 4 });
   def('medical_campus', 'service', '醫療研究園區', { group: 'newbuildings', unlock: 800, cost: 11800, upkeep: 10, jobs: 70, h: 40, color: '#e8f4f8', uses: { road: 1, power: 25, water: 18 }, happy: 11 });
@@ -298,12 +297,8 @@
   def('container_port', 'industrial', '貨櫃碼頭', { architecture:'harbor', color:'#397f9e', unlock:2500, cost:36000, upkeep:22, needs:'shore', h:26, jobs:110, uses:{road:1,power:32,water:12}, goods:36, income:38, pollution:4 });
   def('cruise_terminal', 'commercial', '郵輪客運碼頭', { architecture:'harbor', color:'#58a6b8', unlock:800, cost:18500, upkeep:10, needs:'shore', h:24, jobs:62, uses:{road:1,power:20,water:14}, income:32, happy:5 });
   def('amusement_park', 'commercial', '大型遊樂園', { architecture:'market', color:'#d65b9b', unlock:800, cost:24000, upkeep:14, h:30, jobs:90, uses:{road:1,power:32,water:24}, income:42, happy:10 });
-  def('city_zoo', 'service', '城市動物園', { architecture:'green', color:'#75a86a', unlock:800, cost:17000, upkeep:9, h:16, jobs:55, uses:{road:1,power:12,water:16}, happy:8, income:8 });
-  def('concert_hall', 'service', '音樂會演藝中心', { architecture:'dome', color:'#9b78b8', unlock:800, cost:16500, upkeep:8, h:28, jobs:48, uses:{road:1,power:20,water:8}, happy:7, income:18 });
-  def('art_gallery', 'service', '現代美術館', { architecture:'glass', color:'#c7bca8', unlock:250, cost:7800, upkeep:3, h:22, jobs:24, uses:{road:1,power:10,water:4}, happy:5, income:4 });
   def('old_town_square', 'service', '歷史老城廣場', { architecture:'civic', color:'#b78d68', unlock:60, cost:3600, upkeep:1, h:12, jobs:12, uses:{road:1}, happy:5, income:2 });
   def('chinatown_district', 'commercial', '唐人街商業街', { architecture:'market', color:'#c94c43', unlock:250, cost:8200, upkeep:4, h:22, jobs:48, uses:{road:1,power:12,water:7}, income:16, happy:4 });
-  def('beach_resort', 'commercial', '海濱度假區', { architecture:'campus', color:'#4da9b8', unlock:800, cost:19500, upkeep:9, needs:'shore', h:20, jobs:58, uses:{road:1,power:18,water:18}, income:34, happy:9 });
   def('central_park', 'service', '中央城市公園', { architecture:'green', color:'#57945f', unlock:250, cost:9500, upkeep:3, h:10, jobs:18, uses:{road:1,water:4}, happy:9, pollution:-2 });
   def('observation_tower', 'service', '城市觀景塔', { architecture:'spire', color:'#9cb5c2', unlock:2500, cost:28500, upkeep:8, h:110, jobs:32, uses:{road:1,power:12,water:3}, income:22, happy:6 });
   def('harbor_lighthouse', 'service', '港灣燈塔', { architecture:'spire', color:'#e6d5b8', unlock:250, cost:6200, upkeep:1, needs:'shore', h:52, jobs:4, uses:{road:1,power:2}, happy:3 });
