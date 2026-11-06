@@ -155,7 +155,71 @@ function makeKit(g, cx, cyb, v) {
 }
 
 // ───────────── 各建築造型 ─────────────
+
+function expansionModel(K, d, id) {
+  const glass = ['#b8d5df','#d9e4e5'], metal = '#667b86', roof = d.color;
+  const box = (a,b,c,e,z,h,col,o) => K.box(a,b,c,e,z,h,col,o||{});
+  if (id === 'high_speed_station' || id === 'airport_terminal' || id === 'air_cargo_terminal') {
+    K.flat([[-.48,-.4],[.46,-.42],[.48,.4],[-.46,.42]],0,'#c7d0d0');
+    box(-.42,.38,-.28,.27,0,id==='high_speed_station'?13:18,glass[0],{win:{gx:5,gy:5,ww:4,wh:5}});
+    box(-.44,.4,-.3,.29,id==='high_speed_station'?13:18,2,roof);
+    if(id==='airport_terminal'){box(-.2,.2,-.1,.1,20,4,'#e8edf0'); for(let u=-.32;u<=.32;u+=.16) K.line(u,-.32,1,u,-.32,20,metal,1.4);}
+    if(id==='air_cargo_terminal'){for(let u of [-.28,-.08,.12,.30]) box(u,u+.1,.28,.4,0,8,['#c65d4b','#d4a24c','#4d86a8'][Math.abs(Math.round(u*10))%3]);}
+    return;
+  }
+  if (id==='rail_depot') {box(-.42,.42,-.3,.3,0,13,'#9da9aa',{win:{gx:8,gy:6,ww:4,wh:4}});K.gable(-.46,.46,-.34,.34,13,6,'#586b75','u');for(let u of [-.25,0,.25])K.line(u,-.34,0,u,-.34,13,metal,1.4);return;}
+  if (id==='container_port' || id==='cruise_terminal' || id==='harbor_lighthouse') {
+    K.flat([[-.48,-.4],[.44,-.42],[.48,.4],[-.46,.42]],0,'#9ebfc3');
+    if(id==='harbor_lighthouse'){box(-.10,.10,-.1,.1,0,28,'#eee4ce');box(-.14,.14,-.14,.14,28,5,'#c84e43');box(-.09,.09,-.09,.09,33,3,'#f4d78b');K.dot(0,0,38,3,'#fff4bd');return;}
+    box(-.40,.12,-.27,.22,0,12,id==='cruise_terminal'?'#e7e9e5':'#718c99',{win:{gx:6,gy:5,ww:4,wh:4}});
+    if(id==='container_port'){for(let i=0;i<4;i++)for(let j=0;j<2;j++)box(-.30+i*.17,-.16+i*.17,-.02+j*.18,.12+j*.18,0,5+(i%2)*2,['#c75d4d','#d3a14e','#4c84a5','#638e75'][(i+j)%4]);}
+    else {box(.08,.40,-.22,.30,0,16,'#dce8e8',{win:{gx:5,gy:5,ww:3,wh:4}});K.line(.25,.0,16,.25,.0,27,metal,2);}
+    return;
+  }
+  if (id==='amusement_park' || id==='city_zoo' || id==='central_park' || id==='beach_resort') {
+    K.flat([[-.46,-.4],[.44,-.42],[.47,.4],[-.45,.42]],0,id==='beach_resort'?'#d8c69d':'#83ad72');
+    if(id==='amusement_park'){K.ell(-.12,-.04,3,15,'#f0c45d');for(let i=0;i<8;i++){let a=i*Math.PI/4;K.line(-.12,-.04,3,-.12+Math.cos(a)*.23,-.04+Math.sin(a)*.23,3,'#d45d76',2);}box(.18,.40,-.22,.20,0,10,'#d75d9a');}
+    else if(id==='city_zoo'){for(let u of [-.28,-.02,.24]){K.tree(u,-.12,0,7);K.line(u-.08,.22,1,u+.08,.22,1,'#9a7955',2);}box(-.1,.12,.12,.3,0,7,'#d8d4b9');}
+    else if(id==='beach_resort'){box(-.28,.28,-.2,.2,0,10,'#f1e6d4',{win:{gx:7,gy:6,ww:4,wh:3}});K.flat([[-.44,.28],[.42,.25],[.46,.4],[-.4,.42]],1,'#55a9c0');}
+    else {for(let u of [-.32,-.08,.18,.34])K.tree(u,(u%2)*.2,0,7);K.flat([[-.08,-.4],[.08,-.4],[.12,.4],[-.12,.4]],1,'#d9d2bb');}
+    return;
+  }
+  if (id==='concert_hall' || id==='art_gallery' || id==='old_town_square' || id==='chinatown_district' || id==='stadium_complex' || id==='observation_tower' || id==='suspension_bridge_landmark' || id==='international_finance_centre' || id==='sky_garden_tower') {
+    if(id==='old_town_square'){K.flat([[-.45,-.4],[.45,-.4],[.45,.4],[-.45,.4]],0,'#c9b79c');box(-.13,.13,-.13,.13,0,9,'#b38b65');K.gable(-.18,.18,-.18,.18,9,5,'#8c5745','u');for(let u of [-.32,.32])K.tree(u,.3,0,6);return;}
+    if(id==='suspension_bridge_landmark'){K.line(-.46,0,2,.46,0,2,metal,5);for(let u of [-.28,.28]){K.line(u,0,2,u,0,28,metal,3);for(let v=-.4;v<=.4;v+=.1)K.line(u,0,27,v,0,2,'#d7dfe0',1);}return;}
+    if(id==='observation_tower'){box(-.12,.12,-.12,.12,0,65,metal);box(-.32,.32,-.25,.25,40,8,'#b8d0d8',{win:{gx:5,gy:4,ww:3,wh:3}});K.line(0,0,65,0,0,82,metal,2);return;}
+    if(id==='sky_garden_tower' || id==='international_finance_centre'){box(-.28,.28,-.25,.25,0,id==='sky_garden_tower'?72:88,glass[0],{win:{gx:6,gy:6,ww:3,wh:4}});for(let z=16;z<80;z+=20){K.flat([[-.32,-.28],[.32,-.28],[.32,.28],[-.32,.28]],z,'#6c9b7b');}return;}
+    if(id==='stadium_complex'){K.ell(0,0,3,24,'#d8ded8','#7c8b8c');K.ell(0,0,5,17,'#4e8c65');K.ell(0,0,6,10,'#a9c5a0');box(-.36,.36,-.3,.3,0,7,roof);return;}
+    if(id==='concert_hall'){box(-.38,.38,-.3,.3,0,17,'#d7dce0');K.gable(-.4,.4,-.32,.32,17,12,roof,'u');box(-.12,.12,.29,.34,0,12,'#37495b');return;}
+    if(id==='art_gallery'){box(-.38,.38,-.3,.3,0,14,'#e5e0d5');box(-.24,.24,-.2,.2,14,3,roof);K.flat([[-.28,-.23],[.28,-.23],[.28,.23],[-.28,.23]],18,'#c7dce0');return;}
+    box(-.36,.36,-.3,.3,0,18,roof,{win:{gx:7,gy:6,ww:4,wh:4}});for(let u of [-.25,0,.25])box(u-.04,u+.04,.30,.36,0,22,'#f0c45d');
+    return;
+  }
+  // Fallback for a newly introduced catalog model: landscaped base and articulated facade.
+  K.landscape(d); box(-.34,.34,-.28,.28,0,Math.max(12,d.h||18),roof,{win:{gx:7,gy:6,ww:4,wh:4}});
+}
+
 const SHAPES = {
+  airport_terminal: (K,d) => expansionModel(K,d,'airport_terminal'),
+  air_cargo_terminal: (K,d) => expansionModel(K,d,'air_cargo_terminal'),
+  high_speed_station: (K,d) => expansionModel(K,d,'high_speed_station'),
+  rail_depot: (K,d) => expansionModel(K,d,'rail_depot'),
+  container_port: (K,d) => expansionModel(K,d,'container_port'),
+  cruise_terminal: (K,d) => expansionModel(K,d,'cruise_terminal'),
+  amusement_park: (K,d) => expansionModel(K,d,'amusement_park'),
+  city_zoo: (K,d) => expansionModel(K,d,'city_zoo'),
+  concert_hall: (K,d) => expansionModel(K,d,'concert_hall'),
+  art_gallery: (K,d) => expansionModel(K,d,'art_gallery'),
+  old_town_square: (K,d) => expansionModel(K,d,'old_town_square'),
+  chinatown_district: (K,d) => expansionModel(K,d,'chinatown_district'),
+  beach_resort: (K,d) => expansionModel(K,d,'beach_resort'),
+  central_park: (K,d) => expansionModel(K,d,'central_park'),
+  observation_tower: (K,d) => expansionModel(K,d,'observation_tower'),
+  harbor_lighthouse: (K,d) => expansionModel(K,d,'harbor_lighthouse'),
+  sky_garden_tower: (K,d) => expansionModel(K,d,'sky_garden_tower'),
+  suspension_bridge_landmark: (K,d) => expansionModel(K,d,'suspension_bridge_landmark'),
+  international_finance_centre: (K,d) => expansionModel(K,d,'international_finance_centre'),
+  stadium_complex: (K,d) => expansionModel(K,d,'stadium_complex'),
   _box: (K, d, h) => K.box(-.4, .4, -.34, .34, 0, h, d.color, { win: {} }),
 
   subway(K, d) {
