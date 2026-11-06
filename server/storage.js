@@ -6,7 +6,7 @@
 // 不依賴任何套件：雲端版直接用 Node 內建的 fetch 呼叫 Upstash 的 REST API。
 const fs = require('fs'), path = require('path'), os = require('os');
 
-const dataDir = (env = process.env) => env.DATA_DIR || path.join(os.homedir(), 'city-mmo-data');
+const dataDir = (env = process.env) => env.DATA_DIR || path.join(os.homedir(), env.TEST_MODE === '1' ? 'city-mmo-test-data' : 'city-mmo-data');
 const dataFile = (env = process.env) => path.join(dataDir(env), 'world.json');
 
 function createStorage(env = process.env, fetchFn = globalThis.fetch, legacyFile = path.join(__dirname, 'world.json')) {
