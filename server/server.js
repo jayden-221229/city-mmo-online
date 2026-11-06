@@ -61,6 +61,21 @@ app.post(['/api/auth/register', '/api/socket-io/api/auth/register'], async (req,
     res.json({ token, username });
   } catch (e) { console.error('register failed:', e); res.status(500).json({ error: '註冊失敗，請稍後再試。' }); }
 });
+app.get('/api/test/session', async (req, res) => {
+  if (process.env.TEST_MODE !== '1') return res.sendStatus(404);
+  try {
+    const username = 'citytester';
+    let account = accounts[username];
+    if (!account) {
+      const credentials = await hashPassword(crypto.randomBytes(24).toString('hex'));
+      account = { username, ...credentials, token: crypto.randomBytes(32).toString('hex'), createdAt: Date.now(), testAccount: true };
+      accounts[username] = account;
+      await saveAccounts();
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ token: account.token, username: account.username });
+  } catch (e) { console.error('test session failed:', e); res.status(500).json({ error: '無法建立測試工作階段。' }); }
+});
 app.post(['/api/auth/login', '/api/socket-io/api/auth/login'], async (req, res) => {
   try {
     const username = String((req.body || {}).username || '').trim();
@@ -76,7 +91,13 @@ app.post(['/api/auth/login', '/api/socket-io/api/auth/login'], async (req, res) 
 app.get(['/healthz', '/api/socket-io/healthz'], (req, res) => res.send('ok'));                          // 主機服務的健康檢查用
 app.use('/shared', express.static(path.join(__dirname, '../shared'))); // 舊版客戶端路徑相容
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../index.html')));
+app.get('/', (req, res, next) => {
+  if (process.env.TEST_MODE !== '1') return res.sendFile(path.join(__dirname, '../index.html'));
+  fs.promises.readFile(path.join(__dirname, '../index.html'), 'utf8').then(html => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.type('html').send(html.replace('</head>', '<script>window.GAME_TEST_MODE=true;</script></head>'));
+  }).catch(next);
+});
 
 const room = (cx, cy) => `c:${cx},${cy}`;      // 視野廣播房間：一個 chunk 一個房間
 const MAX_VIEW = 14;                           // 單一玩家最多同時訂閱 14x14 chunks，防濫用

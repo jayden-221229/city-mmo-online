@@ -73,7 +73,6 @@
   def('fab',           'industrial', '高科技晶圓廠', { unlock: 2500, jobs: 80, cost: 15000, h: 18, color: '#8f5fd0', uses: { road: 1, power: 80, water: 40 }, tax: 55, goods: 20, pollution: 6 });
   def('datacenter',    'industrial', '資料中心',     { unlock: 2500, jobs: 40, cost: 18000, h: 18, color: '#3a86ff', uses: { road: 1, power: 100, water: 30 }, tax: 70, pollution: 3 });
   // ── 新內容：觀光、教育醫療、未來科技（group 讓 UI 可以獨立成一個「新建築」分頁）──
-  def('beach_resort', 'commercial', '海濱度假村', { group: 'newbuildings', unlock: 250, cost: 6200, upkeep: 5, jobs: 38, h: 34, color: '#2a9d8f', needs: 'shore', uses: { road: 1, power: 12, water: 10 }, income: 22, demand: 90, happy: 5 });
   def('aquarium', 'service', '海洋水族館', { group: 'newbuildings', unlock: 250, cost: 7800, upkeep: 6, jobs: 32, h: 32, color: '#4ea8de', uses: { road: 1, power: 18, water: 14 }, income: 8, demand: 70, happy: 6 });
   def('museum', 'service', '城市博物館', { group: 'newbuildings', unlock: 60, cost: 2200, upkeep: 2, jobs: 12, h: 24, color: '#cbb994', uses: { road: 1, power: 4, water: 2 }, happy: 4 });
   def('medical_campus', 'service', '醫療研究園區', { group: 'newbuildings', unlock: 800, cost: 11800, upkeep: 10, jobs: 70, h: 40, color: '#e8f4f8', uses: { road: 1, power: 25, water: 18 }, happy: 11 });
@@ -287,6 +286,26 @@
   def("grand_arena", "service", "城市巨蛋競技場", {architecture:"dome",color:"#c46f6f",unlock:800,cost:19800,h:31,jobs:65,upkeep:11,uses:{road:1,power:30,water:14},happy:8,income:15,tax:20});
   def("world_wonder", "service", "全服合作奇觀", {architecture:"spire",color:"#d6b45b",unlock:2500,cost:85000,h:48,jobs:40,upkeep:18,uses:{road:1,power:22,water:8},happy:12,income:25,tax:20,pollution:-1});
   def("eco_transit_hub", "transport", "綠能交通樞紐", {architecture:"green",color:"#48a995",unlock:800,cost:11200,h:23,jobs:42,upkeep:5,uses:{road:1,power:18,water:5},happy:5,pollution:-1.5});
+
+
+  // ── 城市擴張大型更新：航空、海運、高鐵、觀光、特色街區與地標 ──
+  // 沿用既有放置、道路、水電、人口解鎖、收入與維護費機制；不改動帳號或存檔格式。
+  def('airport_terminal', 'transport', '國際機場航廈', { architecture:'glass', color:'#9db8c9', unlock:2500, cost:28000, upkeep:18, h:34, jobs:85, uses:{road:1,power:28,water:10}, income:24, happy:3 });
+  def('air_cargo_terminal', 'industrial', '航空貨運中心', { architecture:'industrial', color:'#8c9eaa', unlock:800, cost:14500, upkeep:8, h:20, jobs:58, uses:{road:1,power:18,water:4}, goods:18, income:12, pollution:1.5 });
+  def('high_speed_station', 'transport', '高速鐵路車站', { architecture:'glass', color:'#6b9bb4', unlock:2500, cost:32000, upkeep:20, h:30, jobs:95, uses:{road:1,power:35,water:12}, income:30, happy:5 });
+  def('rail_depot', 'transport', '鐵路維修基地', { architecture:'industrial', color:'#89939a', unlock:800, cost:9800, upkeep:6, h:18, jobs:42, uses:{road:1,power:12,water:3}, income:5 });
+  def('container_port', 'industrial', '貨櫃碼頭', { architecture:'harbor', color:'#397f9e', unlock:2500, cost:36000, upkeep:22, needs:'shore', h:26, jobs:110, uses:{road:1,power:32,water:12}, goods:36, income:38, pollution:4 });
+  def('cruise_terminal', 'commercial', '郵輪客運碼頭', { architecture:'harbor', color:'#58a6b8', unlock:800, cost:18500, upkeep:10, needs:'shore', h:24, jobs:62, uses:{road:1,power:20,water:14}, income:32, happy:5 });
+  def('amusement_park', 'commercial', '大型遊樂園', { architecture:'market', color:'#d65b9b', unlock:800, cost:24000, upkeep:14, h:30, jobs:90, uses:{road:1,power:32,water:24}, income:42, happy:10 });
+  def('old_town_square', 'service', '歷史老城廣場', { architecture:'civic', color:'#b78d68', unlock:60, cost:3600, upkeep:1, h:12, jobs:12, uses:{road:1}, happy:5, income:2 });
+  def('chinatown_district', 'commercial', '唐人街商業街', { architecture:'market', color:'#c94c43', unlock:250, cost:8200, upkeep:4, h:22, jobs:48, uses:{road:1,power:12,water:7}, income:16, happy:4 });
+  def('central_park', 'service', '中央城市公園', { architecture:'green', color:'#57945f', unlock:250, cost:9500, upkeep:3, h:10, jobs:18, uses:{road:1,water:4}, happy:9, pollution:-2 });
+  def('observation_tower', 'service', '城市觀景塔', { architecture:'spire', color:'#9cb5c2', unlock:2500, cost:28500, upkeep:8, h:110, jobs:32, uses:{road:1,power:12,water:3}, income:22, happy:6 });
+  def('harbor_lighthouse', 'service', '港灣燈塔', { architecture:'spire', color:'#e6d5b8', unlock:250, cost:6200, upkeep:1, needs:'shore', h:52, jobs:4, uses:{road:1,power:2}, happy:3 });
+  def('sky_garden_tower', 'commercial', '空中花園摩天樓', { architecture:'glass', color:'#69a88b', unlock:8000, cost:72000, upkeep:32, h:125, jobs:220, uses:{road:1,power:65,water:30}, income:88, happy:8, pollution:-1 });
+  def('suspension_bridge_landmark', 'service', '跨海景觀大橋地標', { architecture:'civic', color:'#a9b5bd', unlock:2500, cost:42000, upkeep:10, h:38, jobs:24, uses:{road:1,power:8}, income:12, happy:5 });
+  def('international_finance_centre', 'commercial', '國際金融中心', { architecture:'glass', color:'#547eaa', unlock:8000, cost:88000, upkeep:38, h:140, jobs:280, uses:{road:1,power:80,water:24}, income:110, tax:95 });
+  def('stadium_complex', 'service', '國際體育園區', { architecture:'dome', color:'#6d9c82', unlock:2500, cost:46000, upkeep:24, h:34, jobs:145, uses:{road:1,power:42,water:24}, income:46, happy:11 });
 
   return { CHUNK, NET_BIT, CATS, BUILDINGS, def, variant, needBits, LEVELS, levelIndex, ACHIEVEMENTS, EVENTS, GAME_MODES,
     CLAIM_BASE: 1500, START_MONEY: 5000, BASE_SUPPLY: { power: 30, water: 30 } };   // BASE_SUPPLY：每位玩家免費的基礎水電額度
