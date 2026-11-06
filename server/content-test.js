@@ -26,9 +26,15 @@ for (const section of shapeSections) {
 for (const [id, def] of Object.entries(G.BUILDINGS)) {
   assert(def.line || knownSprites.has(id), 'building needs a dedicated sprite or line rendering: ' + id);
 }
-assert.strictEqual(Object.keys(G.BUILDINGS).length, 185, 'expected 185 catalog entries including the 116 expanded buildings');
+assert.strictEqual(Object.keys(G.BUILDINGS).length, 201, 'expected 201 catalog entries after the city expansion pack');
 
 assert(G.BUILDINGS.bus_stop && G.BUILDINGS.bus_stop.cat === 'transport', 'early-game bus stop is available in the transport category');
+for (const id of ["airport_terminal","air_cargo_terminal","high_speed_station","rail_depot","container_port","cruise_terminal","amusement_park","old_town_square","chinatown_district","central_park","observation_tower","harbor_lighthouse","sky_garden_tower","suspension_bridge_landmark","international_finance_centre","stadium_complex"]) {
+  assert(G.BUILDINGS[id], 'new city expansion building exists: ' + id);
+  assert(knownSprites.has(id), 'new city expansion building has a dedicated model: ' + id);
+  assert(/^#[0-9a-f]{6}$/i.test(G.BUILDINGS[id].color), 'new city expansion building has a valid colour: ' + id);
+}
+
 
 // New city-expansion buildings must have real coloured sprite art and economy rules.
 for (const id of ["chinatown_gate","neon_market","waterfront_promenade","botanical_dome","convention_centre","film_studio","marina","food_market","urban_farm","sorting_centre","logistics_hub","data_exchange","science_museum","grand_arena","world_wonder","eco_transit_hub"]) {
