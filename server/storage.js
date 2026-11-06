@@ -10,9 +10,9 @@ const dataDir = (env = process.env) => env.DATA_DIR || path.join(os.homedir(), e
 const dataFile = (env = process.env) => path.join(dataDir(env), 'world.json');
 
 function createStorage(env = process.env, fetchFn = globalThis.fetch, legacyFile = path.join(__dirname, 'world.json')) {
-  const url = env.UPSTASH_REDIS_REST_URL || env.mmo_KV_REST_API_URL, token = env.UPSTASH_REDIS_REST_TOKEN || env.mmo_KV_REST_API_TOKEN;
+  const url = env.TEST_MODE === '1' ? null : (env.UPSTASH_REDIS_REST_URL || env.mmo_KV_REST_API_URL), token = env.TEST_MODE === '1' ? null : (env.UPSTASH_REDIS_REST_TOKEN || env.mmo_KV_REST_API_TOKEN);
   // Vercel 的函式檔案系統不可當永久存檔；未設 Upstash 時回傳明確錯誤後端，避免啟動時嘗試建立本機資料夾。
-  if (env.VERCEL && !(url && token)) {
+  if (env.VERCEL && env.TEST_MODE !== '1' && !(url && token)) {
     const missing = () => Promise.reject(new Error('Vercel 部署必須設定 UPSTASH_REDIS_REST_URL 與 UPSTASH_REDIS_REST_TOKEN。'));
     return { kind: 'missing-upstash', async reset() { return missing(); }, async load() { return missing(); }, async save() { return missing(); }, async loadAccounts() { return missing(); }, async saveAccounts() { return missing(); }, delayFor() { return 60000; } };
   }
