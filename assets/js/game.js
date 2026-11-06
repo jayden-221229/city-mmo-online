@@ -232,8 +232,22 @@ function connectGame() {
     window.dispatchEvent(new CustomEvent('citymmo:game-ready', { detail: { username: myName } }));
   });
 }
-socket.on('connect', () => {
-  if (authReady) connectGame();
+socket.on('connect', async () => {
+  if (window.GAME_TEST_MODE) {
+    authScreen.style.display = 'none';
+    $('net').style.display = 'none';
+    try {
+      const response = await fetch('/api/test/session', { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data.token) throw new Error(data.error || '測試模式連線失敗');
+      token = data.token; myName = data.username; authReady = true;
+      store.set('cm_auth_token', token); store.set('cm_auth_name', myName);
+      connectGame();
+    } catch (e) {
+      authScreen.style.display = 'flex';
+      setAuthError(e.message || '無法啟動免登入測試模式。');
+    }
+  } else if (authReady) connectGame();
   else { $('net').style.display = 'none'; authScreen.style.display = 'flex'; }
 });
 socket.on('chunk', p => {
